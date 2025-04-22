@@ -5,20 +5,24 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
+
 public class Server {
 	int count = 1;
 	ArrayList<ClientThread> clients = new ArrayList<>(); //stores all clients
 	ArrayList<String> usernames = new ArrayList<>(); //stores all usernames
 	ArrayList<ClientThread> playQueue = new ArrayList<>(); //stores the player queue of who clicked playOnline
 
+
 	TheServer server;
 	private Consumer<String> callback;
+
 
 	public Server(Consumer<String> callback) {
 		this.callback = callback;
 		server = new TheServer();
 		server.start();
 	}
+
 
 	public class TheServer extends Thread {
 		public void run() {
@@ -38,6 +42,7 @@ public class Server {
 		}
 	}
 
+
 	class ClientThread extends Thread {
 		Socket connection;
 		int count;
@@ -46,14 +51,17 @@ public class Server {
 		String username = null;
 		private GameSession session;
 
+
 		public void setSession(GameSession session) {
 			this.session = session;
 		}
+
 
 		ClientThread(Socket s, int count) {
 			this.connection = s;
 			this.count = count;
 		}
+
 
 		//method that checks if the current username already exists
 		private boolean isUsernameTaken(String name) {
@@ -65,6 +73,7 @@ public class Server {
 			}
 			return false;
 		}
+
 
 		//method that sends the username to all clients in order to ensure they have the most updated list of clients on teh server
 		private void broadcastUsernamesToAll() {
@@ -79,9 +88,11 @@ public class Server {
 			}
 		}
 
+
 		public void updateClients(String message) {
 			callback.accept(message);
 		}
+
 
 		public void run() {
 			try {
@@ -120,8 +131,10 @@ public class Server {
 					String data = in.readObject().toString(); //reading the information
 
 
+
+
 					//handles the player queue logic to pair them into a game
-					if (data.startsWith("move:")) {
+					if (data.startsWith("MOVE:")) {
 						if (session != null) {
 							int col = Integer.parseInt(data.substring(5));
 							session.makeMove(this, col);
@@ -130,9 +143,11 @@ public class Server {
 						playQueue.add(this);
 						updateClients(username + " wants to play!");
 
+
 						if (playQueue.size() >= 2) {
 							ClientThread p1 = playQueue.remove(0);
 							ClientThread p2 = playQueue.remove(0);
+
 
 							GameSession gs = new GameSession(p1, p2, callback);
 							p1.setSession(gs);
@@ -150,6 +165,7 @@ public class Server {
 						out.writeObject("Echo from server: " + data);
 					}
 
+
 				} catch (Exception e) {
 					//for when the user disconnects from the server
 					updateClients("❌ " + username + " disconnected."); //when a user disconnects
@@ -162,3 +178,4 @@ public class Server {
 		}
 	}
 }
+
