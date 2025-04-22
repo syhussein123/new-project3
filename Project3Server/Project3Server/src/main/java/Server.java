@@ -7,12 +7,12 @@ import java.util.function.Consumer;
 
 public class Server {
 	int count = 1;
-	ArrayList<ClientThread> clients = new ArrayList<>(); // stores all clients
-	ArrayList<String> usernames = new ArrayList<>(); // stores all usernames
-	ArrayList<ClientThread> playQueue = new ArrayList<>(); // stores the player queue of who clicked playOnline
+	ArrayList<ClientThread> clients = new ArrayList<>(); //stores all clients
+	ArrayList<String> usernames = new ArrayList<>(); //stores all usernames
+	ArrayList<ClientThread> playQueue = new ArrayList<>(); //stores the player queue of who clicked playOnline
 
 	TheServer server;
-	private Consumer<String> callback; // callback string
+	private Consumer<String> callback;
 
 	public Server(Consumer<String> callback) {
 		this.callback = callback;
@@ -66,12 +66,12 @@ public class Server {
 			return false;
 		}
 
-		// method that sends the username to all clients in order to ensure they have the most updated list of clients on teh server
+		//method that sends the username to all clients in order to ensure they have the most updated list of clients on teh server
 		private void broadcastUsernamesToAll() {
 			for (ClientThread c : clients) {
 				try {
 					if (c.out != null) {
-						c.out.writeObject(new ArrayList<>(usernames)); // sends out as arrayList
+						c.out.writeObject(new ArrayList<>(usernames)); //sends out as arrayList
 					}
 				} catch (Exception e) {
 					System.out.println("Error sending usernames to " + c.username);
@@ -96,7 +96,7 @@ public class Server {
 			while (username == null) {
 				try {
 					String msg = in.readObject().toString(); //reading in from client
-					if (msg.startsWith("username:")) { // checking to see if we are reading in the right line by looking for username key word
+					if (msg.startsWith("username:")) { //checking to see if we are reading in the right line by looking for username key word
 						String proposed = msg.substring(9).trim(); //parsing the message
 						//if the username isn't taken
 						if (!isUsernameTaken(proposed)) {
@@ -114,7 +114,7 @@ public class Server {
 					break;
 				}
 			}
-			// this while statement is used for chatting, very imporatnt for later
+			//this while statement is used for chatting, very imporatnt for later
 			while (true) {
 				try {
 					String data = in.readObject().toString(); //reading the information

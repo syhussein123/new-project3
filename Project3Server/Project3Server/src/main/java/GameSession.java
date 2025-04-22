@@ -43,6 +43,12 @@ public class GameSession {
 			if (gameBoard[r][c].equals(".")) {
 				gameBoard[r][c] = currentToken;
 
+
+				String update = "UPDATE:" + r + "," + c + "," + currentToken; //this is to get the infromation that will be used to update the actual guis
+				sendToClientFromServer(player1, update);
+				sendToClientFromServer(player2, update);
+
+
 				if (checkWin(gameBoard, currentToken)) {
 					sendToClientFromServer(player1, "Player " + currPlayer.count + " wins!");
 					sendToClientFromServer(player2, "Player " + currPlayer.count + " wins!");
