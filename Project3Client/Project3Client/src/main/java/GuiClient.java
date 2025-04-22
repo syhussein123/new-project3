@@ -12,6 +12,7 @@ import javafx.scene.layout.HBox;
 import java.util.ArrayList;
 import javafx.scene.layout.GridPane;
 
+
 public class GuiClient extends Application {
 	Client clientThread = new Client();
 	TextField usernameInput;
@@ -24,20 +25,24 @@ public class GuiClient extends Application {
 	Button[][] gridOfButtons = new Button[6][7];
 	String currentToken = "G";
 
+
 	public static void main(String[] args) {
 		launch(args);
 	}
 
+
 	private void updatedBoard(int row, int col, String token) {
 		Button btn = gridOfButtons[row][col]; //this is so the button that was clicked can actualy get updated with the set token color:>>>
-//		btn.setText(" "); //lol i forgot we had a
+//     btn.setText(" "); //lol i forgot we had a
 		btn.setStyle("-fx-background-color: " + (token.equals("G") ? "green" : "gold") + "; " +
 				"-fx-border-color: black; -fx-font-weight: bold;");
 	}
 
+
 	//play game logic method ysss
 	public void playGameScreen(Stage primaryStage) {
 		GridPane boardGrid = new GridPane();
+
 
 		for (int r = 0; r < 6; r++) {
 			for (int c = 0; c < 7; c++) {
@@ -46,20 +51,25 @@ public class GuiClient extends Application {
 				int colDrop = c;
 
 
+
+
 				space.setOnAction(e -> {
 					clientThread.send("MOVE:" + colDrop);
 				}); //
 
-//				space.setOnAction(e -> {
-//					for (int row = 5; row >= 0; row--) {
-//						if (gridOfButtons[row][colDrop].getText().equals(".")) {
-//							updatedBoard(row, colDrop, currentToken);  // <-- ⚠ local update BEFORE confirmation
-//							currentToken = currentToken.equals("G") ? "Y" : "G";
-//							break;
-//						}
-//					}
-//					clientThread.send("MOVE:" + colDrop);
-//				});
+
+//           space.setOnAction(e -> {
+//              for (int row = 5; row >= 0; row--) {
+//                 if (gridOfButtons[row][colDrop].getText().equals(".")) {
+//                    updatedBoard(row, colDrop, currentToken);  // <-- ⚠ local update BEFORE confirmation
+//                    currentToken = currentToken.equals("G") ? "Y" : "G";
+//                    break;
+//                 }
+//              }
+//              clientThread.send("MOVE:" + colDrop);
+//           });
+
+
 
 
 				gridOfButtons[r][c] = space;
@@ -67,9 +77,11 @@ public class GuiClient extends Application {
 			}
 		}
 
+
 		TextField input = new TextField();
 		input.setPromptText("Type your message here...");
 		Button sendButton = new Button("Send");
+
 
 		sendButton.setOnAction(e -> {
 			String msg = input.getText();
@@ -79,13 +91,16 @@ public class GuiClient extends Application {
 			}
 		});
 
+
 		VBox chatSection = new VBox(10, input, sendButton);
 		chatSection.setPadding(new Insets(20));
 		chatSection.setAlignment(Pos.CENTER);
 
+
 		VBox gameLayout = new VBox(30, boardGrid, chatSection);
 		gameLayout.setAlignment(Pos.CENTER);
 		gameLayout.setPadding(new Insets(20));
+
 
 		Scene gameScene = new Scene(gameLayout, 600, 600);
 		Platform.runLater(() -> {
@@ -106,6 +121,7 @@ public class GuiClient extends Application {
 		submitUser = new Button("submit");
 		usernameBox = new HBox(10, usernameInput, submitUser);
 		usernameBox.setAlignment(Pos.CENTER);
+
 
 		//event handler for the submit button
 		submitUser.setOnAction(e -> {
@@ -171,6 +187,7 @@ public class GuiClient extends Application {
 			}
 		});
 
+
 		//just setting up the GUI side for them.
 		usernameSelection = new VBox(10, welcomeLabel, usernameBox, feedbackLabel);
 		usernameSelection.setAlignment(Pos.CENTER);
@@ -181,6 +198,7 @@ public class GuiClient extends Application {
 		primaryStage.show();
 	}
 
+
 	//main screen setup method
 	public void mainScreen() {
 		titleLabel = new Label("welcome " + username + "! select your game!");
@@ -188,29 +206,36 @@ public class GuiClient extends Application {
 		titleLabel.setAlignment(Pos.CENTER);
 		titleLabel.setMaxWidth(Double.MAX_VALUE);
 
+
 		playOnline = new Button("play online");
 		playWithComputer = new Button("play with computer");
 		buttonBox = new VBox(10, playOnline, playWithComputer);
 		buttonBox.setAlignment(Pos.CENTER);
+
 
 		onlineTitle = new Label("online players:");
 		onlineList = new Label("list of online players");
 		onlineBox = new VBox(10, onlineTitle, onlineList);
 		onlineBox.setAlignment(Pos.CENTER);
 
+
 		information = new HBox(100, onlineBox, buttonBox);
 		information.setAlignment(Pos.CENTER);
+
 
 		mainLayout = new VBox(20, titleLabel, information);
 		mainLayout.setAlignment(Pos.CENTER);
 		mainLayout.setPadding(new Insets(20));
 		mainScreen = new Scene(mainLayout, 600, 600);
 
+
 		playOnline.setOnAction(e -> {
 			clientThread.send("play_request");
 		});
 
+
 	}
+
 
 	public void chatLayout(){
 		// Chat layout
@@ -229,9 +254,11 @@ public class GuiClient extends Application {
 		Scene chatScene = new Scene(layout, 1000, 1000);
 	}
 
+
 	@Override
 	public void start(Stage primaryStage) {
 		clientThread.start();
+
 
 		clientThread.setMessageHandler(msg -> {
 			System.out.println("Received from server: " + msg);
@@ -247,21 +274,11 @@ public class GuiClient extends Application {
 				System.out.println("UPDATE RECEIVED :O row:" + row + " col:" + col + " token:" + token);
 				Platform.runLater(() -> updatedBoard(row, col, token)); //this is so it only syncs to the client side from server ONCE the move HAS been made from EITHER client!!!
 			}
-			//looking for a win message based on what the server detected
-			else if (msg.contains("wins!")) {
-				Platform.runLater(() -> {
-					Alert alert = new Alert(Alert.AlertType.INFORMATION); // setting the game over screen
-					alert.setTitle("Game Over"); // need to fix this so that the user sees if they win or lost
-					alert.setHeaderText(null);
-					alert.setContentText(msg);
-					alert.showAndWait();
-				});
-			}
-			// General messages
 			else {
 				System.out.println("Server: " + msg);
 			}
 		});
+
 
 		promptUsername(primaryStage); //first prompting we have
 	}
