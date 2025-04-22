@@ -29,28 +29,38 @@ public class GuiClient extends Application {
 	}
 
 	private void updatedBoard(int row, int col, String token) {
-		gridOfButtons[row][col].setText(token);
+		Button btn = gridOfButtons[row][col]; //this is so the button that was clicked can actualy get updated with the set token color:>>>
+//		btn.setText(" "); //lol i forgot we had a
+		btn.setStyle("-fx-background-color: " + (token.equals("G") ? "green" : "gold") + "; " +
+				"-fx-border-color: black; -fx-font-weight: bold;");
 	}
-	//play game logic method:
+
+	//play game logic method ysss
 	public void playGameScreen(Stage primaryStage) {
 		GridPane boardGrid = new GridPane();
 
 		for (int r = 0; r < 6; r++) {
 			for (int c = 0; c < 7; c++) {
-				Button space = new Button(".");
+				Button space = new Button();
 				space.setMinSize(70, 70);
 				int colDrop = c;
 
+
 				space.setOnAction(e -> {
-					for (int row = 5; row >= 0; row--) {
-						if (gridOfButtons[row][colDrop].getText().equals(".")) {
-							updatedBoard(row, colDrop, currentToken);
-							currentToken = currentToken.equals("G") ? "Y" : "G";
-							break;
-						}
-					}
-					clientThread.send("move:" + colDrop);
-				});
+					clientThread.send("MOVE:" + colDrop);
+				}); //
+
+//				space.setOnAction(e -> {
+//					for (int row = 5; row >= 0; row--) {
+//						if (gridOfButtons[row][colDrop].getText().equals(".")) {
+//							updatedBoard(row, colDrop, currentToken);  // <-- ⚠ local update BEFORE confirmation
+//							currentToken = currentToken.equals("G") ? "Y" : "G";
+//							break;
+//						}
+//					}
+//					clientThread.send("MOVE:" + colDrop);
+//				});
+
 
 				gridOfButtons[r][c] = space;
 				boardGrid.add(space, c, r);
@@ -83,7 +93,6 @@ public class GuiClient extends Application {
 			primaryStage.setTitle("Connect 4");
 		});
 	}
-
 	//this method creates the prompt for the username and if a username is valid, it will proceed to the next screen.
 	public void promptUsername(Stage primaryStage) {
 		usernameInput = new TextField();
@@ -91,9 +100,9 @@ public class GuiClient extends Application {
 		usernameInput.setPrefWidth(200);
 		welcomeLabel = new Label("Welcome to Connect4");
 		welcomeLabel.setFont(Font.font("Impact", 32));
-		welcomeLabel.setAlignment(Pos.CENTER);            // aligns text inside the label
+		welcomeLabel.setAlignment(Pos.CENTER);//ligns text inside the label
 		welcomeLabel.setMaxWidth(Double.MAX_VALUE);
-		feedbackLabel = new Label(); // for "username taken" warning
+		feedbackLabel = new Label(); //for "username taken" warning
 		submitUser = new Button("submit");
 		usernameBox = new HBox(10, usernameInput, submitUser);
 		usernameBox.setAlignment(Pos.CENTER);
@@ -106,7 +115,7 @@ public class GuiClient extends Application {
 			feedbackLabel.setText("");
 			if (!username.isEmpty()) {
 				clientThread.send("username:" + username); //sends username input to server
-				// check server response in a background thread
+				//check server response in a background thread
 				new Thread(() -> {
 					try {
 						while (clientThread.latestMessage == null ||
@@ -117,11 +126,11 @@ public class GuiClient extends Application {
 						clientThread.latestMessage = null; // reset
 						//if accepted switch to next scene
 						if (response.equals("username_accepted")) {
-							// Set handler first so we catch updates immediately
+							//set handler first so we catch updates immediately
 							clientThread.setUsernamesHandler(list -> {
 								Platform.runLater(() -> {
-									ArrayList<String> others = new ArrayList<>(); // list to hold active users
-									for (String name : list) { // every name in the list
+									ArrayList<String> others = new ArrayList<>(); //list to hold active users
+									for (String name : list) { //every name in the list
 										if (!name.equalsIgnoreCase(username)) { // removing our current clients name
 											others.add(name);
 										}
@@ -133,8 +142,8 @@ public class GuiClient extends Application {
 							//better and update them based on what was read in through the thread.
 							Platform.runLater(() -> {
 								mainScreen();
-								// If already received the list before mainScreen was built
-								// this updates existing clients that are already on that screen
+								//if already received the list before mainScreen was built..
+								//this updates existing clients that are already on that screen
 								if (!clientThread.latestUsernames.isEmpty()) {
 									ArrayList<String> others = new ArrayList<>();
 									for (String name : clientThread.latestUsernames) {
@@ -147,7 +156,7 @@ public class GuiClient extends Application {
 								primaryStage.setScene(mainScreen);
 								primaryStage.setTitle("Connected Chat");
 							});
-							//anything else means the username is taken, prompt for another.
+							//anything else means the username is taken, prompt for anotherr
 						} else {
 							Platform.runLater(() -> feedbackLabel.setText("username is taken, try another. "));
 						}
@@ -156,7 +165,7 @@ public class GuiClient extends Application {
 					}
 				}).start();
 			}
-			//in the instance the user tries bypassing the enterUsername screen.
+			//in the instance the user tries bypassing the enterUsername screen
 			else{
 				feedbackLabel.setText("you must enter a username to continue");
 			}
@@ -225,25 +234,24 @@ public class GuiClient extends Application {
 		clientThread.start();
 
 		clientThread.setMessageHandler(msg -> {
-			// Game start message
+			System.out.println("Received from server: " + msg);
+			//game start message
 			if (msg.startsWith("game_start:")) {
 				Platform.runLater(() -> playGameScreen(primaryStage));
 			}
-			// Move updates
-			else if (msg.startsWith("update:")) {
+			else if (msg.startsWith("UPDATE:")) {
 				String[] parts = msg.substring(7).split(",");
-				int row = Integer.parseInt(parts[0]);
+				int row = Integer.parseInt(parts[0]); //getting the rows and columns and the move to be able to detect wins
 				int col = Integer.parseInt(parts[1]);
 				String token = parts[2];
-				Platform.runLater(() -> updatedBoard(row, col, token));
+				System.out.println("UPDATE RECEIVED :O row:" + row + " col:" + col + " token:" + token);
+				Platform.runLater(() -> updatedBoard(row, col, token)); //this is so it only syncs to the client side from server ONCE the move HAS been made from EITHER client!!!
 			}
-			// General messages
 			else {
 				System.out.println("Server: " + msg);
 			}
 		});
 
-		// prompt username first
-		promptUsername(primaryStage);
+		promptUsername(primaryStage); //first prompting we have
 	}
 }
