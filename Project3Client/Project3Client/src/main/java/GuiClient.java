@@ -166,7 +166,7 @@ public class GuiClient extends Application {
 		usernameSelection = new VBox(10, welcomeLabel, usernameBox, feedbackLabel);
 		usernameSelection.setAlignment(Pos.CENTER);
 		usernameSelection.setPadding(new Insets(20));
-		Scene usernameScene = new Scene(usernameSelection, 1000, 1000);
+		Scene usernameScene = new Scene(usernameSelection, 600, 600);
 		primaryStage.setScene(usernameScene);
 		primaryStage.setTitle("Choose Username");
 		primaryStage.show();
@@ -195,7 +195,7 @@ public class GuiClient extends Application {
 		mainLayout = new VBox(20, titleLabel, information);
 		mainLayout.setAlignment(Pos.CENTER);
 		mainLayout.setPadding(new Insets(20));
-		mainScreen = new Scene(mainLayout, 1000, 1000);
+		mainScreen = new Scene(mainLayout, 600, 600);
 
 		playOnline.setOnAction(e -> {
 			clientThread.send("play_request");
