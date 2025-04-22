@@ -121,7 +121,7 @@ public class Server {
 
 
 					//handles the player queue logic to pair them into a game
-					if (data.startsWith("MOVE:")) {
+					if (data.startsWith("move:")) {
 						if (session != null) {
 							int col = Integer.parseInt(data.substring(5));
 							session.makeMove(this, col);

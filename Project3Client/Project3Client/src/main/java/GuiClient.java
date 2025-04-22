@@ -247,6 +247,17 @@ public class GuiClient extends Application {
 				System.out.println("UPDATE RECEIVED :O row:" + row + " col:" + col + " token:" + token);
 				Platform.runLater(() -> updatedBoard(row, col, token)); //this is so it only syncs to the client side from server ONCE the move HAS been made from EITHER client!!!
 			}
+			//looking for a win message based on what the server detected
+			else if (msg.contains("wins!")) {
+				Platform.runLater(() -> {
+					Alert alert = new Alert(Alert.AlertType.INFORMATION); // setting the game over screen
+					alert.setTitle("Game Over"); // need to fix this so that the user sees if they win or lost
+					alert.setHeaderText(null);
+					alert.setContentText(msg);
+					alert.showAndWait();
+				});
+			}
+			// General messages
 			else {
 				System.out.println("Server: " + msg);
 			}
