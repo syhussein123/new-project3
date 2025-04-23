@@ -249,6 +249,57 @@ public class GuiClient extends Application {
 		VBox chatSection = new VBox(10, chatDisplay, input, sendButton); //this is the box qwe will use for our chat
 	}
 
+	//win or lose screen
+	public void winOrLose(boolean isWinner, Stage stage){
+		Label resultLabel = new Label(isWinner ? "You won!" : "You lost.");
+		if(isWinner){
+			resultLabel.setText(username + " won!");
+		}
+		else{
+			resultLabel.setText(username + " lost!");
+		}
+		resultLabel.setFont(Font.font("Impact", 32));
+
+		Button playAgain = new Button("Play Again");
+		playAgain.setOnAction(e -> {
+			clientThread.send("play_request");
+		});
+
+		Button backToMenu = new Button("Main Menu");
+		backToMenu.setOnAction(e -> {
+			mainScreen();
+			stage.setScene(mainScreen);
+		});
+
+		VBox layout = new VBox(20, resultLabel, playAgain, backToMenu);
+		layout.setAlignment(Pos.CENTER);
+		layout.setPadding(new Insets(30));
+
+		Scene resultScene = new Scene(layout, 600, 600);
+		stage.setScene(resultScene);
+	}
+
+	//its a tie screen
+	public void showDrawScreen(Stage stage) {
+		Label drawLabel = new Label("It's a draw!");
+		drawLabel.setFont(Font.font("Impact", 32));
+
+		Button playAgain = new Button("Play Again");
+		playAgain.setOnAction(e -> clientThread.send("play_request"));
+
+		Button backToMenu = new Button("Main Menu");
+		backToMenu.setOnAction(e -> {
+			mainScreen();
+			stage.setScene(mainScreen);
+		});
+
+		VBox layout = new VBox(20, drawLabel, playAgain, backToMenu);
+		layout.setAlignment(Pos.CENTER);
+		layout.setPadding(new Insets(30));
+
+		Scene drawScene = new Scene(layout, 600, 600);
+		stage.setScene(drawScene);
+	}
 
 	@Override
 	public void start(Stage primaryStage) {
@@ -282,14 +333,11 @@ public class GuiClient extends Application {
 					}
 				});
 			}
-			else if (msg.contains("wins!")) {
-				Platform.runLater(() -> {
-					Alert alert = new Alert(Alert.AlertType.INFORMATION);
-					alert.setTitle("Game Over");
-					alert.setHeaderText(null);
-					alert.setContentText(msg);
-					alert.showAndWait();
-				});
+			else if (msg.equals("WINNER") || msg.equals("LOSER")) {
+				Platform.runLater(() -> winOrLose(msg.equals("WINNER"), (Stage) chatDisplay.getScene().getWindow()));
+			}
+			else if (msg.equals("DRAW")) {
+				Platform.runLater(() -> showDrawScreen((Stage) chatDisplay.getScene().getWindow()));
 			}
 			else {
 				System.out.println("Server: " + msg);
