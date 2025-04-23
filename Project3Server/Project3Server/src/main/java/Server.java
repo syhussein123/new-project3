@@ -136,10 +136,17 @@ public class Server {
 							session.makeMove(this, col);
 						}
 					} else if (data.equals("play_request")) {
-						playQueue.add(this);
-						updateClients(username + " wants to play!");
-
-
+						boolean alreadyWaiting = false;
+						for(ClientThread c : playQueue) {
+							if(c.username.equalsIgnoreCase(this.username)) {
+								alreadyWaiting = true;
+								break;
+							}
+						}
+						if(!alreadyWaiting){
+							playQueue.add(this);
+							updateClients(username + " wants to play!");
+						}
 						if (playQueue.size() >= 2) {
 							ClientThread p1 = playQueue.remove(0);
 							ClientThread p2 = playQueue.remove(0);
