@@ -384,6 +384,7 @@ public class GuiClient extends Application {
 			}
 			else if (msg.equals("DRAW")) {
 				Platform.runLater(() -> showDrawScreen((Stage) chatDisplay.getScene().getWindow()));
+			}
 			else if (msg.equals("WINNER") || msg.equals("LOSER")) {
 				Platform.runLater(() -> winOrLose(msg.equals("WINNER"), (Stage) chatDisplay.getScene().getWindow()));
 			}
@@ -406,10 +407,8 @@ public class GuiClient extends Application {
 			else {
 				System.out.println("Server: " + msg);
 			}
-
 			System.out.println("i hate git");
 		});
-
 		promptUsername(primaryStage); //first prompting we have
 	}
 }
