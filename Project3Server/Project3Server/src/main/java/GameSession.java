@@ -24,6 +24,15 @@ public class GameSession {
 		startBoard();
 	}
 
+	//checkks if the board is full
+	private boolean isBoardFull() {
+		for (int c = 0; c < 7; c++) {
+			if (gameBoard[0][c].equals(".")) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	//method to initialize board
 	private void startBoard() {
@@ -62,10 +71,20 @@ public class GameSession {
 
 
 				if (checkWin(gameBoard, currentToken)) {
-					sendToClientFromServer(player1, "Player " + currPlayer.count + " wins!");
-					sendToClientFromServer(player2, "Player " + currPlayer.count + " wins!");
+					// notify winner
+					sendToClientFromServer(currPlayer, "WINNER");
+
+					// notify loser
+					Server.ClientThread loser = (currPlayer == player1) ? player2 : player1;
+					sendToClientFromServer(loser, "LOSER");
 					return;
 				}
+				else if(isBoardFull()){
+					sendToClientFromServer(player1, "DRAW");
+					sendToClientFromServer(player2, "DRAW");
+					return;
+				}
+
 				//this is to keep track of the activity by sending moves, wins, and turns to the server: goal is displaying that to the client
 				sendToClientFromServer(player1, "Player " + currPlayer.count + " dropped in column " + c);
 				sendToClientFromServer(player2, "Player " + currPlayer.count + " dropped in column " + c);
