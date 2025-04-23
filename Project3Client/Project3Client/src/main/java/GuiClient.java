@@ -290,7 +290,7 @@ public class GuiClient extends Application {
 	}
 	//win or lose screen based on the player
 	public void winOrLose(boolean isWinner, Stage stage){
-		Label resultLabel = new Label);
+		Label resultLabel = new Label();
 		// if they are a winner, it displays you won, if not it displays they lost
 		if(isWinner){
 			resultLabel.setText(username + " won!");
@@ -301,14 +301,15 @@ public class GuiClient extends Application {
 		resultLabel.setFont(Font.font("Impact", 32));
 
 		// play again and backtomain buttons
-		Button playAgain = new Button("Play Again");
+		Button playAgain = new Button("play again");
 		playAgain.setOnAction(e -> {
-			clientThread.send("play_request");
+			clientThread.send("play_again");
 			loadingScreen(stage, "waiting for opponent to accept rematch...");
 		});
 
 		Button backToMenu = new Button("Main Menu");
 		backToMenu.setOnAction(e -> {
+			//clientThread.send("cancel_rematch");
 			mainScreen();
 			stage.setScene(mainScreen);
 		});
@@ -326,14 +327,15 @@ public class GuiClient extends Application {
 		Label drawLabel = new Label("It's a draw!");
 		drawLabel.setFont(Font.font("Impact", 32));
 
-		Button playAgain = new Button("Play Again");
+		Button playAgain = new Button("play again");
 		playAgain.setOnAction(e -> {
-			clientThread.send("play_request");
+			clientThread.send("play_again");
 			loadingScreen(stage, "Waiting for opponent to accept rematch...");
 		});
 
 		Button backToMenu = new Button("Main Menu");
 		backToMenu.setOnAction(e -> {
+			//clientThread.send("cancel_rematch");
 			mainScreen();
 			stage.setScene(mainScreen);
 		});
@@ -397,10 +399,15 @@ public class GuiClient extends Application {
 					}
 				});
 			}
+			else if (msg.equals("no_rematch")) {
+				Platform.runLater(() -> {
+					mainScreen();
+					((Stage) chatDisplay.getScene().getWindow()).setScene(mainScreen);
+				});
+			}
 			else {
 				System.out.println("Server: " + msg);
 			}
-			System.out.println("i hate git");
 		});
 		promptUsername(primaryStage); //first prompting we have
 	}
