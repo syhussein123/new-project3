@@ -12,7 +12,6 @@ import javafx.scene.layout.HBox;
 import java.util.ArrayList;
 import javafx.scene.layout.GridPane;
 
-
 public class GuiClient extends Application {
 	Client clientThread = new Client();
 	TextField usernameInput;
@@ -26,11 +25,9 @@ public class GuiClient extends Application {
 	String currentToken = "G";
 	TextArea chatDisplay;
 
-
 	public static void main(String[] args) {
 		launch(args);
 	}
-
 
 	private void updatedBoard(int row, int col, String token) {
 		Button btn = gridOfButtons[row][col]; //this is so the button that was clicked can actualy get updated with the set token color:>>>
@@ -38,7 +35,6 @@ public class GuiClient extends Application {
 		btn.setStyle("-fx-background-color: " + (token.equals("G") ? "green" : "gold") + "; " +
 				"-fx-border-color: black; -fx-font-weight: bold;");
 	}
-
 
 	//play game logic method ysss
 	public void playGameScreen(Stage primaryStage) {
@@ -61,11 +57,9 @@ public class GuiClient extends Application {
 		chatDisplay.setWrapText(true);
 		chatDisplay.setPrefHeight(150);
 
-
 		TextField input = new TextField();
 		input.setPromptText("Type your message here...");
 		Button sendButton = new Button("Send");
-
 
 		sendButton.setOnAction(e -> {
 			String msg = input.getText();
@@ -75,16 +69,13 @@ public class GuiClient extends Application {
 			}
 		});
 
-
 		VBox chatSection = new VBox(10, chatDisplay, input, sendButton);
 		chatSection.setPadding(new Insets(20));
 		chatSection.setAlignment(Pos.CENTER);
 
-
 		VBox gameLayout = new VBox(30, boardGrid, chatSection);
 		gameLayout.setAlignment(Pos.CENTER);
 		gameLayout.setPadding(new Insets(20));
-
 
 		Scene gameScene = new Scene(gameLayout, 600, 600);
 
@@ -110,7 +101,6 @@ public class GuiClient extends Application {
 		submitUser = new Button("submit");
 		usernameBox = new HBox(10, usernameInput, submitUser);
 		usernameBox.setAlignment(Pos.CENTER);
-
 
 		//event handler for the submit button
 		submitUser.setOnAction(e -> {
@@ -176,7 +166,6 @@ public class GuiClient extends Application {
 			}
 		});
 
-
 		//just setting up the GUI side for them.
 		usernameSelection = new VBox(10, welcomeLabel, usernameBox, feedbackLabel);
 		usernameSelection.setAlignment(Pos.CENTER);
@@ -187,7 +176,6 @@ public class GuiClient extends Application {
 		primaryStage.show();
 	}
 
-
 	//main screen setup method
 	public void mainScreen() {
 		titleLabel = new Label("welcome " + username + "! select your game!");
@@ -195,41 +183,34 @@ public class GuiClient extends Application {
 		titleLabel.setAlignment(Pos.CENTER);
 		titleLabel.setMaxWidth(Double.MAX_VALUE);
 
-
 		chatDisplay.setEditable(false); //not an box you can edit but you can edit the actual text
 		chatDisplay.setWrapText(true);
 		chatDisplay.setPrefHeight(150);
-
 
 		playOnline = new Button("play online");
 		playWithComputer = new Button("play with computer");
 		buttonBox = new VBox(10, playOnline, playWithComputer);
 		buttonBox.setAlignment(Pos.CENTER);
 
-
 		onlineTitle = new Label("online players:");
 		onlineList = new Label("list of online players");
 		onlineBox = new VBox(10, onlineTitle, onlineList);
 		onlineBox.setAlignment(Pos.CENTER);
 
-
 		information = new HBox(100, onlineBox, buttonBox);
 		information.setAlignment(Pos.CENTER);
-
 
 		mainLayout = new VBox(20, titleLabel, information);
 		mainLayout.setAlignment(Pos.CENTER);
 		mainLayout.setPadding(new Insets(20));
 		mainScreen = new Scene(mainLayout, 600, 600);
 
-
 		playOnline.setOnAction(e -> {
 			clientThread.send("play_request");
+			loadingScreen((Stage) playOnline.getScene().getWindow(), "matching you to an opponent...");
 		});
 
-
 	}
-
 
 	public void chatLayout(){
 		// Chat layout
@@ -249,6 +230,22 @@ public class GuiClient extends Application {
 		VBox chatSection = new VBox(10, chatDisplay, input, sendButton); //this is the box qwe will use for our chat
 	}
 
+	public void loadingScreen(Stage stage, String message){
+		Label loading = new Label(message);
+		loading.setFont(Font.font("Impact", 24));
+		ProgressIndicator spinner = new ProgressIndicator();
+		spinner.setPrefSize(100, 100);
+		VBox layout = new VBox(20, loading, spinner);
+		layout.setAlignment(Pos.CENTER);
+		layout.setPadding(new Insets(30));
+
+		Scene loadingScene = new Scene(layout, 600, 600);
+		Platform.runLater(() -> {
+			stage.setScene(loadingScene);
+			stage.setTitle("Matchmaking...");
+		});
+
+	}
 	//win or lose screen
 	public void winOrLose(boolean isWinner, Stage stage){
 		Label resultLabel = new Label(isWinner ? "You won!" : "You lost.");
@@ -263,6 +260,7 @@ public class GuiClient extends Application {
 		Button playAgain = new Button("Play Again");
 		playAgain.setOnAction(e -> {
 			clientThread.send("play_request");
+			loadingScreen(stage, "waiting for opponent to accept rematch...");
 		});
 
 		Button backToMenu = new Button("Main Menu");
@@ -285,7 +283,10 @@ public class GuiClient extends Application {
 		drawLabel.setFont(Font.font("Impact", 32));
 
 		Button playAgain = new Button("Play Again");
-		playAgain.setOnAction(e -> clientThread.send("play_request"));
+		playAgain.setOnAction(e -> {
+			clientThread.send("play_request");
+			loadingScreen(stage, "Waiting for opponent to accept rematch...");
+		});
 
 		Button backToMenu = new Button("Main Menu");
 		backToMenu.setOnAction(e -> {

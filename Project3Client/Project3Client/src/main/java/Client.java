@@ -6,7 +6,6 @@ import java.net.Socket;
 import java.util.function.Consumer;
 import java.util.ArrayList;
 
-
 public class Client extends Thread {
 	Socket socketClient;
 	ObjectOutputStream out;
@@ -14,32 +13,26 @@ public class Client extends Thread {
 	public volatile String latestMessage = null; // string variable used across multiple threads that needs to be volatile
 	public volatile ArrayList<String> latestUsernames = new ArrayList<>(); // arrayList that needs to be volatile because it is used across multiple threads
 
-
 	//consumer is an interface that represents a function that takes in one argument
 	private Consumer<String> messageHandler;
 	private Consumer<ArrayList<String>> usernamesHandler;
-
 
 	// added from saja: constructor for partner’s game message handling
 	public Client(Consumer<String> callback) {
 		this.messageHandler = callback;
 	}
 
-
 	//default constructor (so my version still works)
 	public Client() {}
-
 
 	//setting the consumer variables based on the input recieved from the server
 	public void setMessageHandler(Consumer<String> handler) {
 		this.messageHandler = handler;
 	}
 
-
 	public void setUsernamesHandler(Consumer<ArrayList<String>> handler) {
 		this.usernamesHandler = handler;
 	}
-
 
 	public void run() {
 		try {
@@ -48,7 +41,6 @@ public class Client extends Thread {
 			in = new ObjectInputStream(socketClient.getInputStream());
 			socketClient.setTcpNoDelay(true);
 		} catch (Exception e) {}
-
 
 		while (true) {
 			try {
@@ -75,7 +67,6 @@ public class Client extends Thread {
 		}
 	}
 
-
 	//this is to send our own data from the client to the server
 	public void send(String data) {
 		try {
@@ -85,4 +76,3 @@ public class Client extends Thread {
 		}
 	}
 }
-
