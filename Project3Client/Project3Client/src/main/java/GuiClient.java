@@ -41,16 +41,15 @@ public class GuiClient extends Application {
 		Button btn = gridOfButtons[row][col]; //this is so the button that was clicked can actualy get updated with the set token color:>>>
 		Circle tokenCircle = (Circle) btn.getGraphic();
 		if (tokenCircle == null) {
-			tokenCircle = new Circle(25);
+			tokenCircle = new Circle(25); // game token images
 			btn.setGraphic(tokenCircle);
 		}
-		tokenCircle.setFill(token.equals("G") ? Color.GREEN : Color.GOLD);
+		tokenCircle.setFill(token.equals("G") ? Color.GREEN : Color.GOLD); // setting which color each character should be
 	}
 
-	//play game logic method ysss
+	//play game logic method and gui setup
 	public void playGameScreen(Stage primaryStage) {
 		GridPane boardGrid = new GridPane();
-
 		for (int r = 0; r < 6; r++) {
 			for (int c = 0; c < 7; c++) {
 				Button space = new Button();
@@ -59,16 +58,15 @@ public class GuiClient extends Application {
 				space.setOnMouseEntered(e -> space.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;"));
 				space.setOnMouseExited(e -> space.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;"));
 
-
 				Circle circle = new Circle(25);
 				circle.setFill(javafx.scene.paint.Color.LIGHTGRAY);
 				space.setGraphic(circle);
 				space.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 				final int colDrop = c;
 
-				space.setOnAction(e -> clientThread.send("MOVE:" + colDrop));
-				gridOfButtons[r][c] = space;
-				boardGrid.add(space, c, r);
+				space.setOnAction(e -> clientThread.send("MOVE:" + colDrop)); // everytime a space is clicked, it sends the move
+				gridOfButtons[r][c] = space; // setting it equal to it
+				boardGrid.add(space, c, r); // adding that specific token
 			}
 		}
 
@@ -77,17 +75,14 @@ public class GuiClient extends Application {
 		boardGrid.setVgap(5);
 		boardGrid.setPadding(new Insets(20)); //set to be able to make cuts into a rectangle board of 6by7 circles
 
-
 		Region boardBg = new Region();
 		boardBg.setPrefSize(7 * 70 + 40, 6 * 70 + 40);
 		boardBg.setStyle("-fx-background-color: white; -fx-border-radius: 10; -fx-background-radius: 10;"); //this is to set roundness and sie of the circles
-
 
 		StackPane boardStack = new StackPane(boardBg, boardGrid);
 		turnLabel.setFont(Font.font("Courier New", 20));
 		turnLabel.setTextFill(Color.BLACK);
 		turnLabel.setAlignment(Pos.CENTER);
-
 
 		VBox boardWithTurn = new VBox(10, turnLabel, boardStack);
 		boardWithTurn.setAlignment(Pos.CENTER);
@@ -120,7 +115,6 @@ public class GuiClient extends Application {
 		gameLayout.setPadding(new Insets(20));
 
 		gameLayout.setStyle("-fx-background-color: #c9f;");
-
 		Scene gameScene = new Scene(gameLayout, 600, 600);
 
 		chatDisplay.setPrefWidth(550);
@@ -132,6 +126,7 @@ public class GuiClient extends Application {
 			primaryStage.setTitle("Connect 4");
 		});
 	}
+
 	//this method creates the prompt for the username and if a username is valid, it will proceed to the next screen.
 	public void promptUsername(Stage primaryStage) {
 		usernameInput = new TextField();
@@ -249,6 +244,7 @@ public class GuiClient extends Application {
 		mainLayout.setPadding(new Insets(20));
 		mainScreen = new Scene(mainLayout, 600, 600);
 
+		//sending the request to play when online and switching to loading screen
 		playOnline.setOnAction(e -> {
 			clientThread.send("play_request");
 			loadingScreen((Stage) playOnline.getScene().getWindow(), "matching you to an opponent...");
@@ -256,6 +252,7 @@ public class GuiClient extends Application {
 
 	}
 
+	//chat layout function
 	public void chatLayout(){
 		// Chat layout
 		TextField input = new TextField();
@@ -274,10 +271,11 @@ public class GuiClient extends Application {
 		VBox chatSection = new VBox(10, chatDisplay, input, sendButton); //this is the box qwe will use for our chat
 	}
 
+	//function for the loading screen
 	public void loadingScreen(Stage stage, String message){
-		Label loading = new Label(message);
+		Label loading = new Label(message); // label message
 		loading.setFont(Font.font("Impact", 24));
-		ProgressIndicator spinner = new ProgressIndicator();
+		ProgressIndicator spinner = new ProgressIndicator(); // circle loading indicater
 		spinner.setPrefSize(100, 100);
 		VBox layout = new VBox(20, loading, spinner);
 		layout.setAlignment(Pos.CENTER);
@@ -290,9 +288,10 @@ public class GuiClient extends Application {
 		});
 
 	}
-	//win or lose screen
+	//win or lose screen based on the player
 	public void winOrLose(boolean isWinner, Stage stage){
-		Label resultLabel = new Label(isWinner ? "You won!" : "You lost.");
+		Label resultLabel = new Label);
+		// if they are a winner, it displays you won, if not it displays they lost
 		if(isWinner){
 			resultLabel.setText(username + " won!");
 		}
@@ -301,6 +300,7 @@ public class GuiClient extends Application {
 		}
 		resultLabel.setFont(Font.font("Impact", 32));
 
+		// play again and backtomain buttons
 		Button playAgain = new Button("Play Again");
 		playAgain.setOnAction(e -> {
 			clientThread.send("play_request");
@@ -321,7 +321,7 @@ public class GuiClient extends Application {
 		stage.setScene(resultScene);
 	}
 
-	//its a tie screen
+	//its a tie screen, same as above but set label.
 	public void showDrawScreen(Stage stage) {
 		Label drawLabel = new Label("It's a draw!");
 		drawLabel.setFont(Font.font("Impact", 32));
@@ -377,12 +377,6 @@ public class GuiClient extends Application {
 						chatDisplay.appendText(chatText + "\n"); //this is to print out the info from the server onto the corrpsonging thread at hand->so this is chat per 2 clients
 					}
 				});
-			}
-			else if (msg.equals("WINNER") || msg.equals("LOSER")) {
-				Platform.runLater(() -> winOrLose(msg.equals("WINNER"), (Stage) chatDisplay.getScene().getWindow()));
-			}
-			else if (msg.equals("DRAW")) {
-				Platform.runLater(() -> showDrawScreen((Stage) chatDisplay.getScene().getWindow()));
 			}
 			else if (msg.equals("WINNER") || msg.equals("LOSER")) {
 				Platform.runLater(() -> winOrLose(msg.equals("WINNER"), (Stage) chatDisplay.getScene().getWindow()));

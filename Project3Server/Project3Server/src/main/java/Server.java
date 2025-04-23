@@ -124,18 +124,23 @@ public class Server {
 							int col = Integer.parseInt(data.substring(5));
 							session.makeMove(this, col);
 						}
-					} else if (data.equals("play_request")) {
-						boolean alreadyWaiting = false;
-						for(ClientThread c : playQueue) {
+					}
+					//if there is a play_request coming in
+					else if (data.equals("play_request")) {
+						boolean alreadyWaiting = false; //if the current user is already waiting for a match
+						for(ClientThread c : playQueue) { // for every player in the playqueue
+							//handles the case for duplicate clicks
 							if(c.username.equalsIgnoreCase(this.username)) {
 								alreadyWaiting = true;
 								break;
 							}
 						}
+						//if they aren't already in the queueu
 						if(!alreadyWaiting){
 							playQueue.add(this);
 							updateClients(username + " wants to play!");
 						}
+						//when the queue is greater than 2
 						if (playQueue.size() >= 2) {
 							ClientThread p1 = playQueue.remove(0);
 							ClientThread p2 = playQueue.remove(0);
@@ -150,7 +155,9 @@ public class Server {
 								callback.accept("Failed to notify players of game start.");
 							}
 						}
-					} else {
+					}
+					//anything else
+					else {
 						System.out.println(username + " sent: " + data);
 						updateClients(username + ": " + data); //this is to update the clients
 
