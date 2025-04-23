@@ -45,6 +45,8 @@ public class Server {
 		ObjectOutputStream out;
 		String username = null;
 		private GameSession session;
+		ClientThread lastOpponent = null;
+		boolean wantsRematch = false;
 
 		public void setSession(GameSession session) {
 			this.session = session;
@@ -127,6 +129,9 @@ public class Server {
 					}
 					//if there is a play_request coming in
 					else if (data.equals("play_request")) {
+						if (this.wantsRematch) {
+							return;
+						}
 						boolean alreadyWaiting = false; //if the current user is already waiting for a match
 						for(ClientThread c : playQueue) { // for every player in the playqueue
 							//handles the case for duplicate clicks
@@ -148,6 +153,9 @@ public class Server {
 							GameSession gs = new GameSession(p1, p2, callback);
 							p1.setSession(gs);
 							p2.setSession(gs);
+
+							p1.lastOpponent = p2;
+							p2.lastOpponent = p1;
 							try {
 								p1.out.writeObject("game_start:G");
 								p2.out.writeObject("game_start:Y");
@@ -156,6 +164,46 @@ public class Server {
 							}
 						}
 					}
+					else if(data.equals("play_again")) {
+						this.wantsRematch = true;
+
+						// Wait for both players to want rematch
+						if (this.lastOpponent != null && this.lastOpponent.wantsRematch) {
+							this.wantsRematch = false;
+							this.lastOpponent.wantsRematch = false;
+							GameSession gs = new GameSession(this, this.lastOpponent, callback);
+							this.setSession(gs);
+							this.lastOpponent.setSession(gs);
+
+							try {
+								this.out.writeObject("game_start:G");
+								this.lastOpponent.out.writeObject("game_start:Y");
+							} catch (Exception ex) {
+								callback.accept("Failed to start rematch.");
+							}
+						}
+						else{
+							if(!this.lastOpponent.wantsRematch) {
+								this.out.writeObject("no_rematch");
+							}
+						}
+					}
+//						else  {
+//							// Timeout fallback (in case other player doesn't respond)
+//							new Thread(() -> {
+//								try {
+//									Thread.sleep(5000); // 5s timeout
+//									if (this.wantsRematch) {
+//										this.wantsRematch = false;
+//										this.lastOpponent = null;
+//										this.out.writeObject("rematch_timeout");
+//									}
+//								} catch (Exception ex) {
+//									ex.printStackTrace();
+//								}
+//							}).start();
+//						}
+//					}
 					//anything else
 					else {
 						System.out.println(username + " sent: " + data);
