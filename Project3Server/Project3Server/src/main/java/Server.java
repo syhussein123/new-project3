@@ -129,10 +129,6 @@ public class Server {
 			while (true) {
 				try {
 					String data = in.readObject().toString(); //reading the information
-
-
-
-
 					//handles the player queue logic to pair them into a game
 					if (data.startsWith("MOVE:")) {
 						if (session != null) {
@@ -161,8 +157,13 @@ public class Server {
 						}
 					} else {
 						System.out.println(username + " sent: " + data);
-						updateClients(username + ": " + data);
-						out.writeObject("Echo from server: " + data);
+						updateClients(username + ": " + data); //this is to update the clients
+
+						if (session != null) {
+							//sedning the chats ONLY to the 2 clients that are talking per thread in the existing session
+							session.sendToClientFromServer(this == session.player1 ? session.player2 : session.player1, "CHAT:" + username + ": " + data);
+							session.sendToClientFromServer(this, "CHAT:" + username + ": " + data);
+						}
 					}
 
 

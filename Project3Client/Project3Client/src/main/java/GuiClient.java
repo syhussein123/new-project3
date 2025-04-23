@@ -24,6 +24,7 @@ public class GuiClient extends Application {
 	String username;
 	Button[][] gridOfButtons = new Button[6][7];
 	String currentToken = "G";
+	TextArea chatDisplay;
 
 
 	public static void main(String[] args) {
@@ -43,39 +44,22 @@ public class GuiClient extends Application {
 	public void playGameScreen(Stage primaryStage) {
 		GridPane boardGrid = new GridPane();
 
-
 		for (int r = 0; r < 6; r++) {
 			for (int c = 0; c < 7; c++) {
 				Button space = new Button();
-				space.setMinSize(70, 70);
+				space.setMinSize(50, 50);
+				space.setAlignment(Pos.CENTER);
 				int colDrop = c;
 
-
-
-
-				space.setOnAction(e -> {
-					clientThread.send("MOVE:" + colDrop);
-				}); //
-
-
-//           space.setOnAction(e -> {
-//              for (int row = 5; row >= 0; row--) {
-//                 if (gridOfButtons[row][colDrop].getText().equals(".")) {
-//                    updatedBoard(row, colDrop, currentToken);  // <-- ⚠ local update BEFORE confirmation
-//                    currentToken = currentToken.equals("G") ? "Y" : "G";
-//                    break;
-//                 }
-//              }
-//              clientThread.send("MOVE:" + colDrop);
-//           });
-
-
-
-
+				space.setOnAction(e -> {clientThread.send("MOVE:" + colDrop);});
 				gridOfButtons[r][c] = space;
 				boardGrid.add(space, c, r);
 			}
 		}
+
+		chatDisplay.setEditable(false);
+		chatDisplay.setWrapText(true);
+		chatDisplay.setPrefHeight(150);
 
 
 		TextField input = new TextField();
@@ -92,7 +76,7 @@ public class GuiClient extends Application {
 		});
 
 
-		VBox chatSection = new VBox(10, input, sendButton);
+		VBox chatSection = new VBox(10, chatDisplay, input, sendButton);
 		chatSection.setPadding(new Insets(20));
 		chatSection.setAlignment(Pos.CENTER);
 
@@ -103,6 +87,11 @@ public class GuiClient extends Application {
 
 
 		Scene gameScene = new Scene(gameLayout, 600, 600);
+
+		chatDisplay.setPrefWidth(550);
+		input.setPrefWidth(450);
+		sendButton.setPrefWidth(100);
+
 		Platform.runLater(() -> {
 			primaryStage.setScene(gameScene);
 			primaryStage.setTitle("Connect 4");
@@ -207,6 +196,11 @@ public class GuiClient extends Application {
 		titleLabel.setMaxWidth(Double.MAX_VALUE);
 
 
+		chatDisplay.setEditable(false); //not an box you can edit but you can edit the actual text
+		chatDisplay.setWrapText(true);
+		chatDisplay.setPrefHeight(150);
+
+
 		playOnline = new Button("play online");
 		playWithComputer = new Button("play with computer");
 		buttonBox = new VBox(10, playOnline, playWithComputer);
@@ -252,6 +246,7 @@ public class GuiClient extends Application {
 		VBox layout = new VBox(10, input, sendButton);
 		layout.setPadding(new Insets(20));
 		Scene chatScene = new Scene(layout, 1000, 1000);
+		VBox chatSection = new VBox(10, chatDisplay, input, sendButton); //this is the box qwe will use for our chat
 	}
 
 
@@ -259,6 +254,11 @@ public class GuiClient extends Application {
 	public void start(Stage primaryStage) {
 		clientThread.start();
 
+		chatDisplay = new TextArea();
+		chatDisplay.setEditable(false);
+		chatDisplay.setWrapText(true);
+		chatDisplay.setPrefHeight(150);
+		chatDisplay.setPrefWidth(550);
 
 		clientThread.setMessageHandler(msg -> {
 			System.out.println("Received from server: " + msg);
@@ -274,6 +274,14 @@ public class GuiClient extends Application {
 				System.out.println("UPDATE RECEIVED :O row:" + row + " col:" + col + " token:" + token);
 				Platform.runLater(() -> updatedBoard(row, col, token)); //this is so it only syncs to the client side from server ONCE the move HAS been made from EITHER client!!!
 			}
+			else if (msg.startsWith("CHAT:")) {
+				String chatText = msg.substring(5);
+				Platform.runLater(() -> {
+					if (chatDisplay != null) {
+						chatDisplay.appendText(chatText + "\n"); //this is to print out the info from the server onto the corrpsonging thread at hand->so this is chat per 2 clients
+					}
+				});
+			}
 			else if (msg.contains("wins!")) {
 				Platform.runLater(() -> {
 					Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -287,7 +295,6 @@ public class GuiClient extends Application {
 				System.out.println("Server: " + msg);
 			}
 		});
-
 
 		promptUsername(primaryStage); //first prompting we have
 	}

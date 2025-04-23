@@ -134,7 +134,7 @@ public class GameSession {
 
 
 
-	private void sendToClientFromServer(Server.ClientThread player, String msg) {
+	public void sendToClientFromServer(Server.ClientThread player, String msg) {
 		try {
 			player.out.writeObject(msg); //writing the message based on condition to the client from the server's stream object yas
 		} catch (Exception e) {
