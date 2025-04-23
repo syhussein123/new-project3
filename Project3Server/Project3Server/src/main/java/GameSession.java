@@ -76,7 +76,10 @@ public class GameSession {
 				currentPlayer = (currPlayer == player1) ? player2 : player1;
 				currentToken = currentToken.equals("G") ? "Y" : "G";
 
-				sendToClientFromServer(currentPlayer, "Your turn!");
+
+				sendToClientFromServer(player1, "TURN:" + currentPlayer.username);
+				sendToClientFromServer(player2, "TURN:" + currentPlayer.username);
+				System.out.println("i hate git");
 				return;
 			}
 		}

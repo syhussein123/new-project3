@@ -11,6 +11,12 @@ import javafx.scene.text.Font;
 import javafx.scene.layout.HBox;
 import java.util.ArrayList;
 import javafx.scene.layout.GridPane;
+import javafx.scene.shape.Circle;
+import javafx.scene.paint.Color;
+import javafx.scene.layout.StackPane;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.layout.Region;
 
 public class GuiClient extends Application {
 	Client clientThread = new Client();
@@ -24,6 +30,8 @@ public class GuiClient extends Application {
 	Button[][] gridOfButtons = new Button[6][7];
 	String currentToken = "G";
 	TextArea chatDisplay;
+	Label turnLabel = new Label();
+
 
 	public static void main(String[] args) {
 		launch(args);
@@ -31,9 +39,12 @@ public class GuiClient extends Application {
 
 	private void updatedBoard(int row, int col, String token) {
 		Button btn = gridOfButtons[row][col]; //this is so the button that was clicked can actualy get updated with the set token color:>>>
-//     btn.setText(" "); //lol i forgot we had a
-		btn.setStyle("-fx-background-color: " + (token.equals("G") ? "green" : "gold") + "; " +
-				"-fx-border-color: black; -fx-font-weight: bold;");
+		Circle tokenCircle = (Circle) btn.getGraphic();
+		if (tokenCircle == null) {
+			tokenCircle = new Circle(25);
+			btn.setGraphic(tokenCircle);
+		}
+		tokenCircle.setFill(token.equals("G") ? Color.GREEN : Color.GOLD);
 	}
 
 	//play game logic method ysss
@@ -44,14 +55,45 @@ public class GuiClient extends Application {
 			for (int c = 0; c < 7; c++) {
 				Button space = new Button();
 				space.setMinSize(50, 50);
-				space.setAlignment(Pos.CENTER);
-				int colDrop = c;
+				space.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+				space.setOnMouseEntered(e -> space.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;"));
+				space.setOnMouseExited(e -> space.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;"));
 
-				space.setOnAction(e -> {clientThread.send("MOVE:" + colDrop);});
+
+				Circle circle = new Circle(25);
+				circle.setFill(javafx.scene.paint.Color.LIGHTGRAY);
+				space.setGraphic(circle);
+				space.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+				final int colDrop = c;
+
+				space.setOnAction(e -> clientThread.send("MOVE:" + colDrop));
 				gridOfButtons[r][c] = space;
 				boardGrid.add(space, c, r);
 			}
 		}
+
+		boardGrid.setAlignment(Pos.CENTER);
+		boardGrid.setHgap(5);
+		boardGrid.setVgap(5);
+		boardGrid.setPadding(new Insets(20)); //set to be able to make cuts into a rectangle board of 6by7 circles
+
+
+		Region boardBg = new Region();
+		boardBg.setPrefSize(7 * 70 + 40, 6 * 70 + 40);
+		boardBg.setStyle("-fx-background-color: white; -fx-border-radius: 10; -fx-background-radius: 10;"); //this is to set roundness and sie of the circles
+
+
+		StackPane boardStack = new StackPane(boardBg, boardGrid);
+		turnLabel.setFont(Font.font("Courier New", 20));
+		turnLabel.setTextFill(Color.BLACK);
+		turnLabel.setAlignment(Pos.CENTER);
+
+
+		VBox boardWithTurn = new VBox(10, turnLabel, boardStack);
+		boardWithTurn.setAlignment(Pos.CENTER);
+
+		boardStack.setStyle("-fx-background-color: #c9f;");
+		boardStack.setAlignment(Pos.CENTER);
 
 		chatDisplay.setEditable(false);
 		chatDisplay.setWrapText(true);
@@ -73,9 +115,11 @@ public class GuiClient extends Application {
 		chatSection.setPadding(new Insets(20));
 		chatSection.setAlignment(Pos.CENTER);
 
-		VBox gameLayout = new VBox(30, boardGrid, chatSection);
+		HBox gameLayout = new HBox(30, boardWithTurn, chatSection);
 		gameLayout.setAlignment(Pos.CENTER);
 		gameLayout.setPadding(new Insets(20));
+
+		gameLayout.setStyle("-fx-background-color: #c9f;");
 
 		Scene gameScene = new Scene(gameLayout, 600, 600);
 
@@ -340,11 +384,30 @@ public class GuiClient extends Application {
 			else if (msg.equals("DRAW")) {
 				Platform.runLater(() -> showDrawScreen((Stage) chatDisplay.getScene().getWindow()));
 			}
+			else if (msg.equals("WINNER") || msg.equals("LOSER")) {
+				Platform.runLater(() -> winOrLose(msg.equals("WINNER"), (Stage) chatDisplay.getScene().getWindow()));
+			}
+			else if (msg.equals("DRAW")) {
+				Platform.runLater(() -> showDrawScreen((Stage) chatDisplay.getScene().getWindow()));
+			}
+			else if (msg.equals("Your turn!") || msg.equals("Not your turn yet!")) {
+				Platform.runLater(() -> turnLabel.setText(msg));
+			}
+			else if (msg.startsWith("TURN:")) {
+				String playerTurn = msg.substring(5);
+				Platform.runLater(() -> {
+					if (playerTurn.equals(username)) {
+						turnLabel.setText("It's your turn!");
+					} else {
+						turnLabel.setText("Waiting for " + playerTurn + "...");
+					}
+				});
+			}
 			else {
 				System.out.println("Server: " + msg);
 			}
+			System.out.println("i hate git");
 		});
-
 		promptUsername(primaryStage); //first prompting we have
 	}
 }
