@@ -401,6 +401,8 @@ public class GuiClient extends Application {
 			else {
 				System.out.println("Server: " + msg);
 			}
+
+			System.out.println("i hate git");
 		});
 
 		promptUsername(primaryStage); //first prompting we have
