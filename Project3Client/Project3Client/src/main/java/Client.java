@@ -34,6 +34,10 @@ public class Client extends Thread {
 		this.usernamesHandler = handler;
 	}
 
+	public Consumer<ArrayList<String>> getUsernamesHandler() {
+		return usernamesHandler;
+	} //jill use this for the GUI
+
 	public void run() {
 		try {
 			socketClient = new Socket("127.0.0.1", 5555);

@@ -82,7 +82,8 @@ public class Server {
 			for (ClientThread c : clients) {
 				try {
 					if (c.out != null) {
-						c.out.writeObject(new ArrayList<>(usernames)); //sends out as arrayList
+						String userListMsg = "USERLIST:" + String.join(",", usernames);
+						c.out.writeObject(userListMsg); //this will be the new user list written out tio the client -> so its not static after username is typed in
 					}
 				} catch (Exception e) {
 					System.out.println("Error sending usernames to " + c.username);
@@ -173,6 +174,10 @@ public class Server {
 							}
 						}
 					}
+					else if (data.equals("get_user_list")) { //need this so we cn update the clients that are online after a game, otherwise, we stuck bc the server didnt receive or send after BroastingtoAll the first time
+						String userListMsg = "USERLIST:" + String.join(",", usernames);
+						out.writeObject(userListMsg);
+					}
 					else if(data.equals("play_again")) {
 						this.wantsRematch = true;
 
@@ -190,6 +195,7 @@ public class Server {
 							} catch (Exception ex) {
 								callback.accept("Failed to start rematch.");
 							}
+							broadcastUsernamesToAll(); //recasing the username , fetching in case ther was new additions DURING the game itself
 						}
 						else{
 							if(!this.lastOpponent.wantsRematch) {

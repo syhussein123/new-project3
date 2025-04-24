@@ -39,12 +39,17 @@ public class GuiClient extends Application {
 
 	private void updatedBoard(int row, int col, String token) {
 		Button btn = gridOfButtons[row][col]; //this is so the button that was clicked can actualy get updated with the set token color:>>>
-		Circle tokenCircle = (Circle) btn.getGraphic();
-		if (tokenCircle == null) {
-			tokenCircle = new Circle(25); // game token images
-			btn.setGraphic(tokenCircle);
+		Circle tokenCircle = new Circle(25); //amking a whoe new token nce it gets the okay from the server
+		if (token.equals("G")) {
+			tokenCircle.setFill(Color.web("#6CC523"));//dis the color green directly from our figma
+		} else {
+			tokenCircle.setFill(Color.web("#E5C25A")); //same here
 		}
-		tokenCircle.setFill(token.equals("G") ? Color.GREEN : Color.GOLD); // setting which color each character should be
+		btn.setGraphic(tokenCircle);
+		//this is to clear for the next token->for some reason, this isnt necessary but a good add to avoid the object acting weird
+		btn.setDisable(true);
+		btn.setOnMouseEntered(null);
+		btn.setOnMouseExited(null);
 	}
 
 	//play game logic method and gui setup
@@ -55,11 +60,15 @@ public class GuiClient extends Application {
 				Button space = new Button();
 				space.setMinSize(50, 50);
 				space.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
-				space.setOnMouseEntered(e -> space.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;"));
-				space.setOnMouseExited(e -> space.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;"));
+				//this is just filling the tokens for the orginal board --> also updated in game baord : color hex values from figma:o
+				space.setOnMouseEntered(e -> {Circle circle = new Circle(25);circle.setFill(currentToken.equals("G") ? Color.web("#6CC523") : Color.web("#E5C25A"));circle.setOpacity(0.5);space.setGraphic(circle);
+				});
+
+				space.setOnMouseExited(e -> {Circle circle = new Circle(25);circle.setFill(Color.web("#8471A8"));space.setGraphic(circle); //for the invidisual 6by7 objects
+				});
 
 				Circle circle = new Circle(25);
-				circle.setFill(javafx.scene.paint.Color.LIGHTGRAY);
+				circle.setFill(Color.web("#8471A8")); //this the shade our purple from our figma
 				space.setGraphic(circle);
 				space.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 				final int colDrop = c;
@@ -80,8 +89,12 @@ public class GuiClient extends Application {
 		boardBg.setStyle("-fx-background-color: white; -fx-border-radius: 10; -fx-background-radius: 10;"); //this is to set roundness and sie of the circles
 
 		StackPane boardStack = new StackPane(boardBg, boardGrid);
-		turnLabel.setFont(Font.font("Courier New", 20));
+		boardStack.setStyle("-fx-background-color: #c9f;");
+		boardStack.setAlignment(Pos.CENTER);
+
+		turnLabel.setFont(Font.font("Courier New", 32));
 		turnLabel.setTextFill(Color.BLACK);
+		turnLabel.setStyle("-fx-effect: dropshadow(gaussian, black, 2, 0.5, 1, 1);"); //this is for the send pbutton so it looks a little more animtated
 		turnLabel.setAlignment(Pos.CENTER);
 
 		VBox boardWithTurn = new VBox(10, turnLabel, boardStack);
@@ -90,36 +103,71 @@ public class GuiClient extends Application {
 		boardStack.setStyle("-fx-background-color: #c9f;");
 		boardStack.setAlignment(Pos.CENTER);
 
+		//chat stufff
 		chatDisplay.setEditable(false);
 		chatDisplay.setWrapText(true);
 		chatDisplay.setPrefHeight(150);
+		chatDisplay.setPrefWidth(520);
+
+		chatDisplay.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 13px;");
+
 
 		TextField input = new TextField();
+//		HBox input = new HBox(5, input, sendButton);
 		input.setPromptText("Type your message here...");
+		input.setPrefWidth(450);
+		input.setStyle("-fx-font-family: 'Courier New';");
+
+
 		Button sendButton = new Button("Send");
+		sendButton.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
+		sendButton.setMinSize(100, 36);
 
 		sendButton.setOnAction(e -> {
 			String msg = input.getText();
-			if (!msg.isEmpty()) {
-				clientThread.send(msg);
+			if (!msg.isEmpty()) {clientThread.send(msg);
 				input.clear();
 			}
 		});
 
-		VBox chatSection = new VBox(10, chatDisplay, input, sendButton);
-		chatSection.setPadding(new Insets(20));
+		HBox inputRow = new HBox(5, input, sendButton);
+		inputRow.setAlignment(Pos.CENTER);
+
+
+		VBox chatSection = new VBox(10, chatDisplay, inputRow);
+		chatSection.setPadding(new Insets(10));
 		chatSection.setAlignment(Pos.CENTER);
 
-		HBox gameLayout = new HBox(30, boardWithTurn, chatSection);
-		gameLayout.setAlignment(Pos.CENTER);
-		gameLayout.setPadding(new Insets(20));
+		Button quitButton = new Button("quit");
+		quitButton.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
+		quitButton.setMinSize(100, 36);
 
-		gameLayout.setStyle("-fx-background-color: #c9f;");
+		quitButton.setOnAction(e -> {
+			mainScreen(); //sending the client back to the screen for quitting :- this might causee problems well see
+			primaryStage.setScene(mainScreen);
+		});
+
+		HBox quitBox = new HBox(quitButton);
+		quitBox.setAlignment(Pos.CENTER_RIGHT);
+		quitBox.setPadding(new Insets(10, 30, 10, 10));
+
+		VBox chatSectionWrapped = new VBox(chatSection); //wrapping  our plain chatsection to add style-->color, and padding as well as positioning like any other instnace
+		chatSectionWrapped.setStyle("-fx-background-color: #bb99ff; -fx-border-color: black; -fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
+		chatSectionWrapped.setPadding(new Insets(15));
+		chatSectionWrapped.setMaxWidth(580);
+		chatSectionWrapped.setAlignment(Pos.CENTER);
+
+		VBox gameLayout = new VBox(20, boardWithTurn, chatSectionWrapped, quitBox); //okay this is the entire layout based on the components i listed above
+		gameLayout.setAlignment(Pos.TOP_CENTER); //will be t where its the chat->gameboard order
+		gameLayout.setPadding(new Insets(20)); //padding betweeen out componnt s
+		gameLayout.setStyle("-fx-background-color: #cab9ec;"); //figma backgrouhnd color
+
+
 		Scene gameScene = new Scene(gameLayout, 600, 600);
 
-		chatDisplay.setPrefWidth(550);
-		input.setPrefWidth(450);
-		sendButton.setPrefWidth(100);
+//		chatDisplay.setPrefWidth(550);
+//		input.setPrefWidth(450);
+//		sendButton.setPrefWidth(100);
 
 		Platform.runLater(() -> {
 			primaryStage.setScene(gameScene);
@@ -130,14 +178,17 @@ public class GuiClient extends Application {
 	//this method creates the prompt for the username and if a username is valid, it will proceed to the next screen.
 	public void promptUsername(Stage primaryStage) {
 		usernameInput = new TextField();
-		usernameInput.setPromptText("enter your username");
-		usernameInput.setPrefWidth(200);
+		usernameInput.setStyle("-fx-font-size: 16px; -fx-font-family: 'Courier New'; -fx-padding: 5; -fx-border-color: black; -fx-border-width: 2; -fx-border-radius: 4; -fx-background-radius: 4; -fx-background-color: white;");
+		usernameInput.setPromptText("Enter Your Username");
+		usernameInput.setStyle("-fx-font-size: 16px; -fx-font-family: 'Courier New'; -fx-padding: 5;");
 		welcomeLabel = new Label("Welcome to Connect4");
-		welcomeLabel.setFont(Font.font("Impact", 32));
+		welcomeLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: black;");
 		welcomeLabel.setAlignment(Pos.CENTER);//ligns text inside the label
 		welcomeLabel.setMaxWidth(Double.MAX_VALUE);
 		feedbackLabel = new Label(); //for "username taken" warning
-		submitUser = new Button("submit");
+		submitUser = new Button("Submit");
+		submitUser.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
+		submitUser.setMinSize(100, 36);
 		usernameBox = new HBox(10, usernameInput, submitUser);
 		usernameBox.setAlignment(Pos.CENTER);
 
@@ -145,7 +196,7 @@ public class GuiClient extends Application {
 		submitUser.setOnAction(e -> {
 			username = usernameInput.getText().trim(); //grabbing the text
 			System.out.println(username);
-			usernameInput.setPromptText("enter your username");
+			usernameInput.setPromptText("Enter Your Username");
 			feedbackLabel.setText("");
 			if (!username.isEmpty()) {
 				clientThread.send("username:" + username); //sends username input to server
@@ -219,25 +270,45 @@ public class GuiClient extends Application {
 	//main screen setup method
 	public void mainScreen() {
 		titleLabel = new Label("welcome " + username + "! select your game!");
-		titleLabel.setFont(Font.font("Impact", 32));
+		titleLabel.setFont(Font.font("Courier New", 32));
+		titleLabel.setStyle("-fx-effect: dropshadow(gaussian, black, 2, 0.5, 1, 1);");
 		titleLabel.setAlignment(Pos.CENTER);
+		titleLabel.setTextFill(Color.BLACK);
 		titleLabel.setMaxWidth(Double.MAX_VALUE);
+
 
 		chatDisplay.setEditable(false); //not an box you can edit but you can edit the actual text
 		chatDisplay.setWrapText(true);
 		chatDisplay.setPrefHeight(150);
 
-		playOnline = new Button("play online");
-		playWithComputer = new Button("play with computer");
+		playOnline = new Button("Play Online"); //lol i tried making this exaclty likr the figma....well see how this looks like bruv
+		playOnline.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
+		playOnline.setMinSize(157, 36);
+
+
+		playWithComputer = new Button("Play with Computer");
+		playWithComputer.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
+		playWithComputer.setMinSize(157, 36);
+
+
 		buttonBox = new VBox(10, playOnline, playWithComputer);
 		buttonBox.setAlignment(Pos.CENTER);
 
 		onlineTitle = new Label("online players:");
+		onlineTitle.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: black;");
 		onlineList = new Label("list of online players");
+		onlineList.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: black;");
+
 		onlineBox = new VBox(10, onlineTitle, onlineList);
 		onlineBox.setAlignment(Pos.CENTER);
 
-		information = new HBox(100, onlineBox, buttonBox);
+		VBox onlineListWrapper = new VBox(10, onlineTitle, onlineList); //wrappign with css based on figma layout and font and rounding of our boxes->will do the same for the other screens
+		onlineListWrapper.setStyle("-fx-background-color: #E5E5E5; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 10 15;");
+		onlineListWrapper.setPadding(new Insets(15));
+		onlineListWrapper.setMaxWidth(200);
+		onlineListWrapper.setAlignment(Pos.CENTER);
+
+		information = new HBox(100, onlineListWrapper, buttonBox);
 		information.setAlignment(Pos.CENTER);
 
 		mainLayout = new VBox(20, titleLabel, information);
@@ -252,6 +323,8 @@ public class GuiClient extends Application {
 			loadingScreen((Stage) playOnline.getScene().getWindow(), "matching you to an opponent...");
 		});
 
+		clientThread.send("get_user_list"); //we NEED her, because she will trigger the NEW list of users in cas epeople jointed mid game-> thi
+
 	}
 
 	//chat layout function
@@ -260,6 +333,10 @@ public class GuiClient extends Application {
 		TextField input = new TextField();
 		input.setPromptText("Type your message here...");
 		Button sendButton = new Button("Send");
+		sendButton.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
+		sendButton.setMinSize(100, 36);
+
+
 		sendButton.setOnAction(e -> {
 			String msg = input.getText();
 			if (!msg.isEmpty()) {
@@ -276,7 +353,7 @@ public class GuiClient extends Application {
 	//function for the loading screen
 	public void loadingScreen(Stage stage, String message){
 		Label loading = new Label(message); // label message
-		loading.setFont(Font.font("Impact", 24));
+		loading.setStyle("-fx-font-size: 24px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-text-fill: black;");
 		ProgressIndicator spinner = new ProgressIndicator(); // circle loading indicater
 		spinner.setPrefSize(100, 100);
 		VBox layout = new VBox(20, loading, spinner);
@@ -422,6 +499,19 @@ public class GuiClient extends Application {
 					mainScreen();
 					((Stage) chatDisplay.getScene().getWindow()).setScene(mainScreen);
 				});
+			}
+			else if (msg.startsWith("USERLIST:")) {
+				String[] allNames = msg.substring(9).split(",");
+				ArrayList<String> others = new ArrayList<>();
+				for (String name : allNames) { //this is to get the player users btoh before AND during a game
+					if (!name.equalsIgnoreCase(username)) {
+						others.add(name); //adding them directly from the server as its getting new users joining yas
+					}
+				}
+				clientThread.latestUsernames = others;
+				if (clientThread.getUsernamesHandler() != null) {
+					clientThread.getUsernamesHandler().accept(others);
+				}
 			}
 			else {
 				System.out.println("Server: " + msg);
