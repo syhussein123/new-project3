@@ -290,6 +290,19 @@ public class GuiClient extends Application {
 			stage.setTitle("Matchmaking...");
 		});
 
+		//handles if they are taking too long to get a response
+		new Thread(() -> {
+			try {
+				Thread.sleep(7000); // 5 second timeout
+				Platform.runLater(() -> {
+					if (stage.getScene() == loadingScene) { // still stuck
+						mainScreen();
+						stage.setScene(mainScreen);
+					}
+				});
+			} catch (InterruptedException ignored) {}
+		}).start();
+
 	}
 	//win or lose screen based on the player
 	public void winOrLose(boolean isWinner, Stage stage){
