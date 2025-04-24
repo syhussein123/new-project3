@@ -10,12 +10,21 @@ public class Server {
 	ArrayList<ClientThread> clients = new ArrayList<>(); //stores all clients
 	ArrayList<String> usernames = new ArrayList<>(); //stores all usernames
 	ArrayList<ClientThread> playQueue = new ArrayList<>(); //stores the player queue of who clicked playOnline
+	ArrayList<String> sensoredWords = new ArrayList<>();
 
 	TheServer server;
 	private Consumer<String> callback;
 
 	public Server(Consumer<String> callback) {
 		this.callback = callback;
+
+		sensoredWords.add("fuck");
+		sensoredWords.add("shit");
+		sensoredWords.add("bitch");
+		sensoredWords.add("hoe");
+		sensoredWords.add("ass");
+		sensoredWords.add("dick");
+
 		server = new TheServer();
 		server.start();
 	}
@@ -167,7 +176,7 @@ public class Server {
 					else if(data.equals("play_again")) {
 						this.wantsRematch = true;
 
-						// Wait for both players to want rematch
+						//wait for both players to want rematch
 						if (this.lastOpponent != null && this.lastOpponent.wantsRematch) {
 							this.wantsRematch = false;
 							this.lastOpponent.wantsRematch = false;
@@ -204,15 +213,24 @@ public class Server {
 //							}).start();
 //						}
 //					}
-					//anything else
+					//anything else, bad words but just regular message sending between 2 opponents too...
 					else {
-						System.out.println(username + " sent: " + data);
-						updateClients(username + ": " + data); //this is to update the clients
+						String filteredMessage = data;
+						for (String word : sensoredWords) {
+							if (filteredMessage.toLowerCase().contains(word)) {
+								String stars = "*".repeat(word.length()); //looping through the sentences that contain the bad vocab (word) and changing it with *
+								filteredMessage = filteredMessage.replaceAll("(?i)" + word, stars); // (?i) makes it case-insensitive
+								System.out.println(filteredMessage);
+							}
+
+						}
+						System.out.println(username + " sent: " + filteredMessage);
+						updateClients(username + ": " + filteredMessage); //this is when the clien ttypes anythign with something thats should be sensored....
 
 						if (session != null) {
-							//sedning the chats ONLY to the 2 clients that are talking per thread in the existing session
-							session.sendToClientFromServer(this == session.player1 ? session.player2 : session.player1, "CHAT:" + username + ": " + data);
-							session.sendToClientFromServer(this, "CHAT:" + username + ": " + data);
+							String chatMsg = "CHAT:" + username + ": " + filteredMessage;
+							session.sendToClientFromServer(this == session.player1 ? session.player2 : session.player1, chatMsg); //sedning the chats ONLY to the 2 clients that are talking per thread in the existing session
+							session.sendToClientFromServer(this, chatMsg);
 						}
 					}
 
