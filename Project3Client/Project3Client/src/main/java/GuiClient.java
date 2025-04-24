@@ -209,6 +209,7 @@ public class GuiClient extends Application {
 		usernameSelection = new VBox(10, welcomeLabel, usernameBox, feedbackLabel);
 		usernameSelection.setAlignment(Pos.CENTER);
 		usernameSelection.setPadding(new Insets(20));
+		usernameSelection.setStyle("-fx-background-color: #c9f;");
 		Scene usernameScene = new Scene(usernameSelection, 600, 600);
 		primaryStage.setScene(usernameScene);
 		primaryStage.setTitle("Choose Username");
@@ -242,6 +243,7 @@ public class GuiClient extends Application {
 		mainLayout = new VBox(20, titleLabel, information);
 		mainLayout.setAlignment(Pos.CENTER);
 		mainLayout.setPadding(new Insets(20));
+		mainLayout.setStyle("-fx-background-color: #c9f;");
 		mainScreen = new Scene(mainLayout, 600, 600);
 
 		//sending the request to play when online and switching to loading screen
@@ -278,6 +280,7 @@ public class GuiClient extends Application {
 		ProgressIndicator spinner = new ProgressIndicator(); // circle loading indicater
 		spinner.setPrefSize(100, 100);
 		VBox layout = new VBox(20, loading, spinner);
+		layout.setStyle("-fx-background-color: #c9f;");
 		layout.setAlignment(Pos.CENTER);
 		layout.setPadding(new Insets(30));
 
@@ -286,6 +289,19 @@ public class GuiClient extends Application {
 			stage.setScene(loadingScene);
 			stage.setTitle("Matchmaking...");
 		});
+
+		//handles if they are taking too long to get a response
+		new Thread(() -> {
+			try {
+				Thread.sleep(7000); // 5 second timeout
+				Platform.runLater(() -> {
+					if (stage.getScene() == loadingScene) { // still stuck
+						mainScreen();
+						stage.setScene(mainScreen);
+					}
+				});
+			} catch (InterruptedException ignored) {}
+		}).start();
 
 	}
 	//win or lose screen based on the player
@@ -315,6 +331,7 @@ public class GuiClient extends Application {
 		});
 
 		VBox layout = new VBox(20, resultLabel, playAgain, backToMenu);
+		layout.setStyle("-fx-background-color: #c9f;");
 		layout.setAlignment(Pos.CENTER);
 		layout.setPadding(new Insets(30));
 
@@ -341,6 +358,7 @@ public class GuiClient extends Application {
 		});
 
 		VBox layout = new VBox(20, drawLabel, playAgain, backToMenu);
+		layout.setStyle("-fx-background-color: #c9f;");
 		layout.setAlignment(Pos.CENTER);
 		layout.setPadding(new Insets(30));
 
