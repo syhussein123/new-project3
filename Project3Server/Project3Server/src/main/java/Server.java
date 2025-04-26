@@ -4,20 +4,19 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.function.Consumer;
-
 public class Server {
 	int count = 1;
 	ArrayList<ClientThread> clients = new ArrayList<>(); //stores all clients
 	ArrayList<String> usernames = new ArrayList<>(); //stores all usernames
 	ArrayList<ClientThread> playQueue = new ArrayList<>(); //stores the player queue of who clicked playOnline
 	ArrayList<String> sensoredWords = new ArrayList<>();
+	ArrayList<ClientThread> spectatorQueue = new ArrayList<>();
+	private GameSession currentActiveGame = null;
 
 	TheServer server;
 	private Consumer<String> callback;
-
 	public Server(Consumer<String> callback) {
 		this.callback = callback;
-
 		sensoredWords.add("fuck");
 		sensoredWords.add("shit");
 		sensoredWords.add("bitch");
@@ -31,11 +30,9 @@ public class Server {
 		sensoredWords.add("dumb");
 		sensoredWords.add("idiot");
 		sensoredWords.add("terrorist");
-
 		server = new TheServer();
 		server.start();
 	}
-
 	public class TheServer extends Thread {
 		public void run() {
 			try (ServerSocket mysocket = new ServerSocket(5555)) {
@@ -53,7 +50,6 @@ public class Server {
 			}
 		}
 	}
-
 	class ClientThread extends Thread {
 		Socket connection;
 		int count;
@@ -63,16 +59,13 @@ public class Server {
 		private GameSession session;
 		ClientThread lastOpponent = null;
 		boolean wantsRematch = false;
-
 		public void setSession(GameSession session) {
 			this.session = session;
 		}
-
 		ClientThread(Socket s, int count) {
 			this.connection = s;
 			this.count = count;
 		}
-
 		//method that checks if the current username already exists
 		private boolean isUsernameTaken(String name) {
 			//for every client online
@@ -83,7 +76,6 @@ public class Server {
 			}
 			return false;
 		}
-
 		//method that sends the username to all clients in order to ensure they have the most updated list of clients on teh server
 		private void broadcastUsernamesToAll() {
 			for (ClientThread c : clients) {
@@ -97,11 +89,9 @@ public class Server {
 				}
 			}
 		}
-
 		public void updateClients(String message) {
 			callback.accept(message);
 		}
-
 		public void run() {
 			try {
 				in = new ObjectInputStream(connection.getInputStream());
@@ -168,8 +158,22 @@ public class Server {
 							ClientThread p2 = playQueue.remove(0);
 
 							GameSession gs = new GameSession(p1, p2, callback);
+							currentActiveGame = gs;
 							p1.setSession(gs);
 							p2.setSession(gs);
+
+							synchronized (spectatorQueue) {
+								for (ClientThread spectator : spectatorQueue) {
+									spectator.setSession(gs);
+									gs.addSpectator(spectator);
+									try {
+										spectator.out.writeObject("spectating");
+									} catch (Exception ex) {
+										ex.printStackTrace();
+									}
+								}
+								spectatorQueue.clear();
+							}
 
 							p1.lastOpponent = p2;
 							p2.lastOpponent = p1;
@@ -187,15 +191,12 @@ public class Server {
 					}
 					else if(data.equals("play_again")) {
 						this.wantsRematch = true;
-
 						if (this.lastOpponent != null && this.lastOpponent.wantsRematch) {
 							this.wantsRematch = false;
 							this.lastOpponent.wantsRematch = false;
-
 							GameSession gs = new GameSession(this, this.lastOpponent, callback);
 							this.setSession(gs);
 							this.lastOpponent.setSession(gs);
-
 							try {
 								this.out.writeObject("game_start:G");
 								this.lastOpponent.out.writeObject("game_start:Y");
@@ -207,7 +208,6 @@ public class Server {
 					}
 					else if (data.equals("cancel_rematch")) {
 						this.wantsRematch = false;
-
 						if (this.lastOpponent != null) {
 							try {
 								this.lastOpponent.wantsRematch = false;
@@ -217,50 +217,24 @@ public class Server {
 								callback.accept("Error notifying opponent about rematch cancel.");
 							}
 						}
-
 						this.lastOpponent = null;
 					}
-//					else if(data.equals("play_again")) {
-//						this.wantsRematch = true;
-//
-//						//wait for both players to want rematch
-//						if (this.lastOpponent != null && this.lastOpponent.wantsRematch) {
-//							this.wantsRematch = false;
-//							this.lastOpponent.wantsRematch = false;
-//							GameSession gs = new GameSession(this, this.lastOpponent, callback);
-//							this.setSession(gs);
-//							this.lastOpponent.setSession(gs);
-//
-//							try {
-//								this.out.writeObject("game_start:G");
-//								this.lastOpponent.out.writeObject("game_start:Y");
-//							} catch (Exception ex) {
-//								callback.accept("Failed to start rematch.");
-//							}
-//							broadcastUsernamesToAll(); //recasing the username , fetching in case ther was new additions DURING the game itself
-//						}
-//						else{
-//							if(!this.lastOpponent.wantsRematch) {
-//								this.out.writeObject("no_rematch");
-//							}
-//						}
-//					}
-//						else  {
-//							// Timeout fallback (in case other player doesn't respond)
-//							new Thread(() -> {
-//								try {
-//									Thread.sleep(5000); // 5s timeout
-//									if (this.wantsRematch) {
-//										this.wantsRematch = false;
-//										this.lastOpponent = null;
-//										this.out.writeObject("rematch_timeout");
-//									}
-//								} catch (Exception ex) {
-//									ex.printStackTrace();
-//								}
-//							}).start();
-//						}
-//					}
+					else if (data.equals("spectate_request")) {
+						synchronized (spectatorQueue) {
+							if (currentActiveGame != null) {
+								setSession(currentActiveGame);
+								currentActiveGame.addSpectator(this);
+								out.writeObject("spectating");
+							} else {
+								spectatorQueue.add(this); // no active game, wait
+								try {
+									out.writeObject("waiting_for_game");
+								} catch (Exception ex) {
+									ex.printStackTrace();
+								}
+							}
+						}
+					}
 					//anything else, bad words but just regular message sending between 2 opponents too...
 					else {
 						String filteredMessage = data;
@@ -270,18 +244,15 @@ public class Server {
 								filteredMessage = filteredMessage.replaceAll("(?i)" + word, stars); // (?i) makes it case-insensitive
 								System.out.println(filteredMessage);
 							}
-
 						}
 						System.out.println(username + " sent: " + filteredMessage);
 						updateClients(username + ": " + filteredMessage); //this is when the clien ttypes anythign with something thats should be sensored....
-
 						if (session != null) {
 							String chatMsg = "CHAT:" + username + ": " + filteredMessage;
 							session.sendToClientFromServer(this == session.player1 ? session.player2 : session.player1, chatMsg); //sedning the chats ONLY to the 2 clients that are talking per thread in the existing session
 							session.sendToClientFromServer(this, chatMsg);
 						}
 					}
-
 				} catch (Exception e) {
 					//for when the user disconnects from the server
 					updateClients("❌ " + username + " disconnected."); //when a user disconnects
@@ -294,3 +265,4 @@ public class Server {
 		}
 	}
 }
+
