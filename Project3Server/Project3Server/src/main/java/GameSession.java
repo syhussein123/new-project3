@@ -78,7 +78,6 @@ public class GameSession {
 
 				sendToClientFromServer(player1, "TURN:" + currentPlayer.username);
 				sendToClientFromServer(player2, "TURN:" + currentPlayer.username);
-				System.out.println("i hate git");
 				return;
 			}
 		}

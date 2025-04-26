@@ -24,6 +24,13 @@ public class Server {
 		sensoredWords.add("hoe");
 		sensoredWords.add("ass");
 		sensoredWords.add("dick");
+		sensoredWords.add("cunt");
+		sensoredWords.add("whore");
+		sensoredWords.add("fatty");
+		sensoredWords.add("stupid");
+		sensoredWords.add("dumb");
+		sensoredWords.add("idiot");
+		sensoredWords.add("terrorist");
 
 		server = new TheServer();
 		server.start();
@@ -181,10 +188,10 @@ public class Server {
 					else if(data.equals("play_again")) {
 						this.wantsRematch = true;
 
-						//wait for both players to want rematch
 						if (this.lastOpponent != null && this.lastOpponent.wantsRematch) {
 							this.wantsRematch = false;
 							this.lastOpponent.wantsRematch = false;
+
 							GameSession gs = new GameSession(this, this.lastOpponent, callback);
 							this.setSession(gs);
 							this.lastOpponent.setSession(gs);
@@ -195,14 +202,49 @@ public class Server {
 							} catch (Exception ex) {
 								callback.accept("Failed to start rematch.");
 							}
-							broadcastUsernamesToAll(); //recasing the username , fetching in case ther was new additions DURING the game itself
-						}
-						else{
-							if(!this.lastOpponent.wantsRematch) {
-								this.out.writeObject("no_rematch");
-							}
+							broadcastUsernamesToAll();
 						}
 					}
+					else if (data.equals("cancel_rematch")) {
+						this.wantsRematch = false;
+
+						if (this.lastOpponent != null) {
+							try {
+								this.lastOpponent.wantsRematch = false;
+								this.lastOpponent.lastOpponent = null;
+								this.lastOpponent.out.writeObject("no_rematch"); // 💥 notify waiting player
+							} catch (Exception ex) {
+								callback.accept("Error notifying opponent about rematch cancel.");
+							}
+						}
+
+						this.lastOpponent = null;
+					}
+//					else if(data.equals("play_again")) {
+//						this.wantsRematch = true;
+//
+//						//wait for both players to want rematch
+//						if (this.lastOpponent != null && this.lastOpponent.wantsRematch) {
+//							this.wantsRematch = false;
+//							this.lastOpponent.wantsRematch = false;
+//							GameSession gs = new GameSession(this, this.lastOpponent, callback);
+//							this.setSession(gs);
+//							this.lastOpponent.setSession(gs);
+//
+//							try {
+//								this.out.writeObject("game_start:G");
+//								this.lastOpponent.out.writeObject("game_start:Y");
+//							} catch (Exception ex) {
+//								callback.accept("Failed to start rematch.");
+//							}
+//							broadcastUsernamesToAll(); //recasing the username , fetching in case ther was new additions DURING the game itself
+//						}
+//						else{
+//							if(!this.lastOpponent.wantsRematch) {
+//								this.out.writeObject("no_rematch");
+//							}
+//						}
+//					}
 //						else  {
 //							// Timeout fallback (in case other player doesn't respond)
 //							new Thread(() -> {
