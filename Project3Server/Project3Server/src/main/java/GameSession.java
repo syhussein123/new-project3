@@ -35,13 +35,16 @@ public class GameSession {
 	}
 
 
-	public GameSession(Server.ClientThread player1, Server.ClientThread player2, Consumer<String> callback) { //provoked when we have pairs of players only
+	Server outerServer;
+	public GameSession(Server outerServer, Server.ClientThread player1, Server.ClientThread player2, Consumer<String> callback) {
+		this.outerServer = outerServer;
 		this.player1 = player1;
 		this.player2 = player2;
 		this.callback = callback;
-		this.currentPlayer = player1; //default starter
+		this.currentPlayer = player1;
 		startBoard();
 	}
+
 	//checkks if the board is full
 	private boolean isBoardFull() {
 		for (int c = 0; c < 7; c++) {
@@ -90,6 +93,7 @@ public class GameSession {
 					for (Server.ClientThread spectator : spectators) {
 						sendToClientFromServer(spectator, "spectator_game_over:" + currPlayer.username + "," + loserPlayer.username);
 					}
+					outerServer.currentActiveGame = null;
 					return;
 				}
 				else if (isBoardFull()) {

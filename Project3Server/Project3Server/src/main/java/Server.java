@@ -11,7 +11,7 @@ public class Server {
 	ArrayList<ClientThread> playQueue = new ArrayList<>(); //stores the player queue of who clicked playOnline
 	ArrayList<String> sensoredWords = new ArrayList<>();
 	ArrayList<ClientThread> spectatorQueue = new ArrayList<>();
-	private GameSession currentActiveGame = null;
+	GameSession currentActiveGame = null;
 
 	TheServer server;
 	private Consumer<String> callback;
@@ -157,7 +157,7 @@ public class Server {
 							ClientThread p1 = playQueue.remove(0);
 							ClientThread p2 = playQueue.remove(0);
 
-							GameSession gs = new GameSession(p1, p2, callback);
+							GameSession gs = new GameSession(Server.this, p1, p2, callback);
 							currentActiveGame = gs;
 							p1.setSession(gs);
 							p2.setSession(gs);
@@ -194,7 +194,7 @@ public class Server {
 						if (this.lastOpponent != null && this.lastOpponent.wantsRematch) {
 							this.wantsRematch = false;
 							this.lastOpponent.wantsRematch = false;
-							GameSession gs = new GameSession(this, this.lastOpponent, callback);
+							GameSession gs = new GameSession(Server.this, this, this.lastOpponent, callback);
 							this.setSession(gs);
 							this.lastOpponent.setSession(gs);
 							try {
