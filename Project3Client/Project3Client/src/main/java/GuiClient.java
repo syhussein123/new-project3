@@ -589,3 +589,7 @@ public class GuiClient extends Application {
 		promptUsername(primaryStage); //first prompting we have
 	}
 }
+
+
+
+
