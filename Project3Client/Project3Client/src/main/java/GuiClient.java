@@ -19,10 +19,11 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.layout.Region;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
+
 public class GuiClient extends Application {
 	Client clientThread = new Client();
 	TextField usernameInput;
-	Button submitUser, playOnline;
+	Button submitUser, playOnline, playWithComputer;
 	VBox usernameSelection, mainLayout, buttonBox, onlineBox;
 	Label feedbackLabel, welcomeLabel, titleLabel, onlineTitle, onlineList;
 	HBox usernameBox, information;
@@ -63,9 +64,6 @@ public class GuiClient extends Application {
 				Button space = new Button();
 				space.setMinSize(50, 50);
 				space.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
-				if (isSpectator) {
-					space.setDisable(true); //this is to get rid of the chovering
-				}
 				//this is just filling the tokens for the orginal board --> also updated in game baord : color hex values from figma:o
 				space.setOnMouseEntered(e -> {Circle circle = new Circle(25);circle.setFill(currentToken.equals("G") ? Color.web("#FFC6CA") : Color.web("#FFC6CA"));circle.setOpacity(0.5);space.setGraphic(circle);
 				});
@@ -76,13 +74,7 @@ public class GuiClient extends Application {
 				space.setGraphic(circle);
 				space.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 				final int colDrop = c;
-				space.setOnAction(e -> {
-					if (turnLabel.getText().equals("It's your turn!")) {
-						clientThread.send("MOVE:" + colDrop);
-					} else {
-						turnLabel.setText("Not your turn yet!");
-					}
-				});
+				space.setOnAction(e -> clientThread.send("MOVE:" + colDrop)); // everytime a space is clicked, it sends the move
 				gridOfButtons[r][c] = space; // setting it equal to it
 				boardGrid.add(space, c, r); // adding that specific token
 			}
@@ -124,7 +116,6 @@ public class GuiClient extends Application {
 			input.setDisable(true);
 			sendButton.setDisable(true);
 			input.setPromptText("Spectators can't chat.");
-
 		}
 
 		sendButton.setOnAction(e -> {
@@ -270,6 +261,9 @@ public class GuiClient extends Application {
 		playOnline = new Button("Play Online"); //lol i tried making this exaclty likr the figma....well see how this looks like bruv
 		playOnline.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
 		playOnline.setMinSize(157, 36);
+		playWithComputer = new Button("Play with Computer");
+		playWithComputer.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
+		playWithComputer.setMinSize(157, 36);
 		Button spectateButton = new Button("Spectate Game");
 		spectateButton.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
 		spectateButton.setMinSize(157, 36);
@@ -277,7 +271,7 @@ public class GuiClient extends Application {
 			clientThread.send("spectate_request");
 			loadingScreen((Stage) spectateButton.getScene().getWindow(), "Finding a game to watch...");
 		});
-		buttonBox = new VBox(10, playOnline, spectateButton);
+		buttonBox = new VBox(10, playOnline, playWithComputer, spectateButton);
 		buttonBox.setAlignment(Pos.CENTER);
 		onlineTitle = new Label("online players:");
 		onlineTitle.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: black;");
@@ -381,20 +375,19 @@ public class GuiClient extends Application {
 		Label resultLabel = new Label();
 		// if they are a winner, it displays you won, if not it displays they lost
 		if(isWinner){
-			resultLabel.setText(username + " won!");}
+			resultLabel.setText(username + " won!");
+		}
 		else{
 			resultLabel.setText(username + " lost!");
 		}
-		resultLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 32px; -fx-font-weight: bold;");
+		resultLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 32px;");
 		// play again and backtomain buttons
-		Button playAgain = new Button("Play Again");
-		playAgain.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
+		Button playAgain = new Button("play again");
 		playAgain.setOnAction(e -> {
 			clientThread.send("play_again");
 			rematchLoadingScreen(stage, "waiting for opponent to accept rematch...");
 		});
 		Button backToMenu = new Button("Main Menu");
-		backToMenu.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
 		backToMenu.setOnAction(e -> {
 			clientThread.send("cancel_rematch");
 			mainScreen();
@@ -411,14 +404,12 @@ public class GuiClient extends Application {
 	public void showDrawScreen(Stage stage) {
 		Label drawLabel = new Label("It's a draw!");
 		drawLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 32px;");
-		Button playAgain = new Button("Play Again");
-		playAgain.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
+		Button playAgain = new Button("play again");
 		playAgain.setOnAction(e -> {
 			clientThread.send("play_again");
 			rematchLoadingScreen(stage, "Waiting for opponent to accept rematch...");
 		});
 		Button backToMenu = new Button("Main Menu");
-		backToMenu.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
 		backToMenu.setOnAction(e -> {
 			clientThread.send("cancel_rematch");
 			mainScreen();
@@ -493,10 +484,7 @@ public class GuiClient extends Application {
 			else if (msg.startsWith("TURN:")) {
 				String playerTurn = msg.substring(5);
 				Platform.runLater(() -> {
-					if (isSpectator) {
-						turnLabel.setText("It's " + playerTurn + "'s turn!");
-					}
-					else if (playerTurn.equals(username)) {
+					if (playerTurn.equals(username)) {
 						turnLabel.setText("It's your turn!");
 					} else {
 						turnLabel.setText("Waiting for " + playerTurn + "...");
