@@ -567,6 +567,21 @@ public class GuiClient extends Application {
 				String loser = parts[1];
 				Platform.runLater(() -> spectatorResultScreen((Stage) chatDisplay.getScene().getWindow(), winner, loser));
 			}
+			else if (msg.startsWith("BOARDSTATE:")) {
+				String boardData = msg.substring(11);
+				String[] rows = boardData.split(";");
+				Platform.runLater(() -> {
+					for (int r = 0; r < rows.length; r++) {
+						String[] cols = rows[r].split(",");
+						for (int c = 0; c < cols.length; c++) {
+							String token = cols[c];
+							if (!token.equals(".")) {
+								updatedBoard(r, c, token);
+							}
+						}
+					}
+				});
+			}
 			else {
 				System.out.println("Server: " + msg);
 			}
@@ -574,3 +589,7 @@ public class GuiClient extends Application {
 		promptUsername(primaryStage); //first prompting we have
 	}
 }
+
+
+
+

@@ -224,9 +224,15 @@ public class Server {
 							if (currentActiveGame != null) {
 								setSession(currentActiveGame);
 								currentActiveGame.addSpectator(this);
-								out.writeObject("spectating");
+								try {
+									out.writeObject("spectating");
+									// 🛠 SEND the full board immediately
+									out.writeObject("BOARDSTATE:" + currentActiveGame.getBoardStateString());
+								} catch (Exception ex) {
+									ex.printStackTrace();
+								}
 							} else {
-								spectatorQueue.add(this); // no active game, wait
+								spectatorQueue.add(this);
 								try {
 									out.writeObject("waiting_for_game");
 								} catch (Exception ex) {
@@ -235,6 +241,7 @@ public class Server {
 							}
 						}
 					}
+
 					//anything else, bad words but just regular message sending between 2 opponents too...
 					else {
 						String filteredMessage = data;
@@ -265,4 +272,10 @@ public class Server {
 		}
 	}
 }
+
+
+
+
+
+
 

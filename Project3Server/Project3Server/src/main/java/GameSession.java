@@ -22,6 +22,19 @@ public class GameSession {
 		}
 	}
 
+	public String getBoardStateString() {
+		StringBuilder sb = new StringBuilder();
+		for (int r = 0; r < 6; r++) {
+			for (int c = 0; c < 7; c++) {
+				sb.append(gameBoard[r][c]);
+				if (c < 6) sb.append(",");
+			}
+			if (r < 5) sb.append(";");
+		}
+		return sb.toString();
+	}
+
+
 	public GameSession(Server.ClientThread player1, Server.ClientThread player2, Consumer<String> callback) { //provoked when we have pairs of players only
 		this.player1 = player1;
 		this.player2 = player2;
@@ -148,4 +161,9 @@ public class GameSession {
 		}
 	}
 }
+
+
+
+
+
 
