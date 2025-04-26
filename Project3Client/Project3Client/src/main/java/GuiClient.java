@@ -18,6 +18,9 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.layout.Region;
 
+import javafx.animation.PauseTransition;
+import javafx.util.Duration;
+
 public class GuiClient extends Application {
 	Client clientThread = new Client();
 	TextField usernameInput;
@@ -31,7 +34,7 @@ public class GuiClient extends Application {
 	String currentToken = "G";
 	TextArea chatDisplay;
 	Label turnLabel = new Label();
-
+	private volatile boolean stillWaiting = false;
 
 	public static void main(String[] args) {
 		launch(args);
@@ -367,19 +370,57 @@ public class GuiClient extends Application {
 			stage.setTitle("Matchmaking...");
 		});
 
-		//handles if they are taking too long to get a response
-		new Thread(() -> {
-			try {
-				Thread.sleep(7000); // 5 second timeout
-				Platform.runLater(() -> {
-					if (stage.getScene() == loadingScene) { // still stuck
-						mainScreen();
-						stage.setScene(mainScreen);
-					}
-				});
-			} catch (InterruptedException ignored) {}
-		}).start();
+//		//handles if they are taking too long to get a response
+//		new Thread(() -> {
+//			try {
+//				Thread.sleep(7000); // 5 second timeout
+//				Platform.runLater(() -> {
+//					if (stage.getScene() == loadingScene) { // still stuck
+//						mainScreen();
+//						stage.setScene(mainScreen);
+//					}
+//				});
+//			} catch (InterruptedException ignored) {}
+//		}).start();
 
+		PauseTransition timeout = new PauseTransition(Duration.seconds(7));
+		timeout.setOnFinished(event -> {
+			if (stillWaiting && stage.getScene() == loadingScene) {
+				stillWaiting = false;
+				mainScreen();
+				stage.setScene(mainScreen);
+			}
+		});
+		timeout.play();
+	}
+
+	//function for the loading screen
+	public void rematchLoadingScreen(Stage stage, String message) {
+		Label loading = new Label(message); // label message
+		loading.setStyle("-fx-font-size: 24px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-text-fill: black;");
+		ProgressIndicator spinner = new ProgressIndicator(); // circle loading indicater
+		spinner.setPrefSize(100, 100);
+		//VBox layout = new VBox(20, loading, spinner);
+
+		Button cancel = new Button("Cancel");
+		cancel.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
+
+		VBox layout = new VBox(20, loading, spinner, cancel);
+		layout.setStyle("-fx-background-color: #c9f;");
+		layout.setAlignment(Pos.CENTER);
+		layout.setPadding(new Insets(30));
+
+		cancel.setOnAction(e -> {
+			//clientThread.send("play_again");
+			mainScreen();
+			stage.setScene(mainScreen);
+		});
+		Scene loadingScene = new Scene(layout, 600, 600);
+
+		Platform.runLater(() -> {
+			stage.setScene(loadingScene);
+			stage.setTitle("Matchmaking...");
+		});
 	}
 	//win or lose screen based on the player
 	public void winOrLose(boolean isWinner, Stage stage){
@@ -397,12 +438,12 @@ public class GuiClient extends Application {
 		Button playAgain = new Button("play again");
 		playAgain.setOnAction(e -> {
 			clientThread.send("play_again");
-			loadingScreen(stage, "waiting for opponent to accept rematch...");
+			rematchLoadingScreen(stage, "waiting for opponent to accept rematch...");
 		});
 
 		Button backToMenu = new Button("Main Menu");
 		backToMenu.setOnAction(e -> {
-			//clientThread.send("cancel_rematch");
+			clientThread.send("cancel_rematch");
 			mainScreen();
 			stage.setScene(mainScreen);
 		});
@@ -424,12 +465,12 @@ public class GuiClient extends Application {
 		Button playAgain = new Button("play again");
 		playAgain.setOnAction(e -> {
 			clientThread.send("play_again");
-			loadingScreen(stage, "Waiting for opponent to accept rematch...");
+			rematchLoadingScreen(stage, "Waiting for opponent to accept rematch...");
 		});
 
 		Button backToMenu = new Button("Main Menu");
 		backToMenu.setOnAction(e -> {
-			//clientThread.send("cancel_rematch");
+			clientThread.send("cancel_rematch");
 			mainScreen();
 			stage.setScene(mainScreen);
 		});
@@ -495,9 +536,26 @@ public class GuiClient extends Application {
 				});
 			}
 			else if (msg.equals("no_rematch")) {
+				stillWaiting = false;
 				Platform.runLater(() -> {
+					Alert alert = new Alert(Alert.AlertType.INFORMATION);
+					alert.setTitle("Rematch Cancelled");
+					alert.setHeaderText(null);
+					alert.setContentText("Your opponent declined the rematch and returned to main menu. Please return to main menu and find another match.");
+					alert.showAndWait();
 					mainScreen();
-					((Stage) chatDisplay.getScene().getWindow()).setScene(mainScreen);
+					try {
+						Scene scene = chatDisplay.getScene();
+						if (scene != null && scene.getWindow() != null) {
+							Stage stage = (Stage) scene.getWindow();
+							stage.setScene(mainScreen);
+						} else {
+							System.out.println("⚠️ Could not switch to main screen — scene/window is null");
+						}
+					} catch (Exception ex) {
+						ex.printStackTrace();
+						System.out.println("❌ Error switching to main screen after no_rematch");
+					}
 				});
 			}
 			else if (msg.startsWith("USERLIST:")) {
@@ -512,6 +570,29 @@ public class GuiClient extends Application {
 				if (clientThread.getUsernamesHandler() != null) {
 					clientThread.getUsernamesHandler().accept(others);
 				}
+			}
+			else if (msg.equals("no_rematch")) {
+				stillWaiting = false;
+				Platform.runLater(() -> {
+					Alert alert = new Alert(Alert.AlertType.INFORMATION);
+					alert.setTitle("Rematch Cancelled");
+					alert.setHeaderText(null);
+					alert.setContentText("Your opponent declined the rematch. Returning to main menu.");
+					alert.showAndWait();
+					mainScreen();
+					try {
+						Scene scene = chatDisplay.getScene();
+						if (scene != null && scene.getWindow() != null) {
+							Stage stage = (Stage) scene.getWindow();
+							stage.setScene(mainScreen);
+						} else {
+							System.out.println("⚠️ Could not switch to main screen — scene/window is null");
+						}
+					} catch (Exception ex) {
+						ex.printStackTrace();
+						System.out.println("❌ Error switching to main screen after no_rematch");
+					}
+				});
 			}
 			else {
 				System.out.println("Server: " + msg);
