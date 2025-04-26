@@ -54,6 +54,7 @@ public class GuiClient extends Application {
 		btn.setOnMouseEntered(null);
 		btn.setOnMouseExited(null);
 	}
+
 	//play game logic method and gui setup
 	public void playGameScreen(Stage primaryStage) {
 		GridPane boardGrid = new GridPane();
