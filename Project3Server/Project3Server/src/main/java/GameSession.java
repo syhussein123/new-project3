@@ -9,7 +9,7 @@ public class GameSession {
 	String currentToken = "G";  //green token first
 	Server.ClientThread currentPlayer;
 	private ArrayList<Server.ClientThread> spectators = new ArrayList<>();
-
+	// adding spectators to the game and sending them all updates
 	public void addSpectator(Server.ClientThread spectator) {
 		spectators.add(spectator);
 		for (int r = 0; r < 6; r++) {
@@ -23,6 +23,7 @@ public class GameSession {
 		sendToClientFromServer(spectator, "TURN:" + currentPlayer.username); //this is so the turns are directly reflected for the spectators jsut as they are for the playetrs
 	}
 
+	// getting the current state of teh board and prepping it to send over to the clients spectating
 	public String getBoardStateString() {
 		StringBuilder sb = new StringBuilder();
 		for (int r = 0; r < 6; r++) {
@@ -35,7 +36,7 @@ public class GameSession {
 		return sb.toString();
 	}
 
-
+	//outerserver is used for teh players that are spectating, basically handles for if they join midgame
 	Server outerServer;
 	public GameSession(Server outerServer, Server.ClientThread player1, Server.ClientThread player2, Consumer<String> callback) {
 		this.outerServer = outerServer;

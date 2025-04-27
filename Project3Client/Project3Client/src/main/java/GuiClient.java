@@ -43,6 +43,7 @@ public class GuiClient extends Application {
 	public static void main(String[] args) {
 		launch(args);
 	}
+	// update board function visually based on what is there
 	private void updatedBoard(int row, int col, String token) {
 		Button btn = gridOfButtons[row][col]; //this is so the button that was clicked can actualy get updated with the set token color:>>>
 		Circle tokenCircle = new Circle(25); //amking a whoe new token nce it gets the okay from the server
@@ -109,7 +110,6 @@ public class GuiClient extends Application {
 		chatDisplay.setPrefWidth(520);
 		chatDisplay.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 13px;");
 		TextField input = new TextField();
-//		HBox input = new HBox(5, input, sendButton);
 		input.setPromptText("Type your message here...");
 		input.setPrefWidth(450);
 		input.setStyle("-fx-font-family: 'Courier New';");
@@ -145,9 +145,7 @@ public class GuiClient extends Application {
 		gameLayout.setPadding(new Insets(20)); //padding betweeen out componnt s
 		gameLayout.setStyle("-fx-background-color: #cab9ec;"); //figma backgrouhnd color
 		Scene gameScene = new Scene(gameLayout, 750, 750);
-//		chatDisplay.setPrefWidth(550);
-//		input.setPrefWidth(450);
-//		sendButton.setPrefWidth(100);
+
 		Platform.runLater(() -> {
 			primaryStage.setScene(gameScene);
 			primaryStage.setTitle("Connect 4");
@@ -243,7 +241,7 @@ public class GuiClient extends Application {
 		primaryStage.setTitle("Choose Username");
 		primaryStage.show();
 	}
-	//main screen setup method
+	//main screen setup method, its all basic ui stuff and set on action, no real logic going on here
 	public void mainScreen() {
 		titleLabel = new Label("welcome " + username + "! select your game!");
 		titleLabel.setFont(Font.font("Courier New", 32));
@@ -313,7 +311,7 @@ public class GuiClient extends Application {
 	}
 	//function for the loading screen
 	public void loadingScreen(Stage stage, String message) {
-		loadingLabel = new Label(message); // Save globally
+		loadingLabel = new Label(message);
 		loadingLabel.setStyle("-fx-font-size: 24px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-text-fill: black;");
 		ProgressIndicator spinner = new ProgressIndicator();
 		spinner.setPrefSize(100, 100);
@@ -322,12 +320,13 @@ public class GuiClient extends Application {
 		layout.setAlignment(Pos.CENTER);
 		layout.setPadding(new Insets(30));
 		Scene loadingScene = new Scene(layout, 750, 750);
+		//letting them know that hey we are trying to find a match for them
 		Platform.runLater(() -> {
 			stage.setScene(loadingScene);
 			stage.setTitle("Matchmaking...");
 		});
-		loadingStage = stage; // Save globally
-
+		loadingStage = stage;
+		// just a way to automatically time out, if the timeout hits seven seconds it sends them back to main.
 		PauseTransition timeout = new PauseTransition(Duration.seconds(7));
 		timeout.setOnFinished(event -> {
 			if (stillWaiting && stage.getScene() == loadingScene) {
@@ -339,7 +338,7 @@ public class GuiClient extends Application {
 		timeout.play();
 	}
 
-	//function for the loading screen
+	//function for the loading screen, same exact thing as above except with a cancel button in case their partener doesn't want to play with tehm
 	public void rematchLoadingScreen(Stage stage, String message) {
 		Label loading = new Label(message); // label message
 		loading.setStyle("-fx-font-size: 24px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-text-fill: black;");
@@ -367,7 +366,8 @@ public class GuiClient extends Application {
 			stage.setTitle("Matchmaking...");
 		});
 	}
-	//win or lose screen based on the player
+
+	//win or lose screen based on the player, mostly ui and on action events, nothing really going on here except for a visual displauy
 	public void winOrLose(boolean isWinner, Stage stage){
 		Label resultLabel = new Label();
 		// if they are a winner, it displays you won, if not it displays they lost
@@ -392,6 +392,7 @@ public class GuiClient extends Application {
 			mainScreen();
 			stage.setScene(mainScreen);
 		});
+
 		rematchDecline.setWrapText(true);
 		rematchDecline.setStyle("-fx-font-size: 16px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-text-fill: black;");
 		rematchDecline.setVisible(false);
@@ -402,6 +403,7 @@ public class GuiClient extends Application {
 		Scene resultScene = new Scene(layout, 750, 750);
 		stage.setScene(resultScene);
 	}
+
 	//its a tie screen, same as above but set label.
 	public void showDrawScreen(Stage stage) {
 		Label drawLabel = new Label("It's a draw!");
@@ -430,6 +432,7 @@ public class GuiClient extends Application {
 		stage.setScene(drawScene);
 	}
 
+	// a screen for spectators to see who won or lost, same exact thing as above tbh except set label
 	public void spectatorResultScreen(Stage stage, String winner, String loser) {
 		Label resultLabel = new Label(winner + " won against " + loser + "!");
 		resultLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 32px; -fx-font-weight: bold");
@@ -457,12 +460,15 @@ public class GuiClient extends Application {
 		chatDisplay.setWrapText(true);
 		chatDisplay.setPrefHeight(150);
 		chatDisplay.setPrefWidth(550);
+
+		//recieving all messages from handler
 		clientThread.setMessageHandler(msg -> {
 			System.out.println("Received from server: " + msg);
-			//game start message
+			//game start message sending them into a game
 			if (msg.startsWith("game_start:")) {
 				Platform.runLater(() -> playGameScreen(primaryStage));
 			}
+			// messages for updated turns, makeing sure we update the screen on both UIs for the game
 			else if (msg.startsWith("UPDATE:")) {
 				String[] parts = msg.substring(7).split(",");
 				int row = Integer.parseInt(parts[0]); //getting the rows and columns and the move to be able to detect wins
@@ -471,6 +477,7 @@ public class GuiClient extends Application {
 				System.out.println("UPDATE RECEIVED :O row:" + row + " col:" + col + " token:" + token);
 				Platform.runLater(() -> updatedBoard(row, col, token)); //this is so it only syncs to the client side from server ONCE the move HAS been made from EITHER client!!!
 			}
+			// handles messages for chat and displaying them to the person in the game with the current player
 			else if (msg.startsWith("CHAT:")) {
 				String chatText = msg.substring(5);
 				Platform.runLater(() -> {
@@ -479,15 +486,19 @@ public class GuiClient extends Application {
 					}
 				});
 			}
+			//checking if we won or lost and displaying that on both of the players screens
 			else if (msg.equals("WINNER") || msg.equals("LOSER")) {
 				Platform.runLater(() -> winOrLose(msg.equals("WINNER"), (Stage) chatDisplay.getScene().getWindow()));
 			}
+			// if it is a draw
 			else if (msg.equals("DRAW")) {
 				Platform.runLater(() -> showDrawScreen((Stage) chatDisplay.getScene().getWindow()));
 			}
+			// displaying the turn status for the middle fo teh game
 			else if (msg.equals("Your turn!") || msg.equals("Not your turn yet!")) {
 				Platform.runLater(() -> turnLabel.setText(msg));
 			}
+			//if message starts with turn, setting it up so it displays correctly on every screen watching or playing this game
 			else if (msg.startsWith("TURN:")) {
 				String playerTurn = msg.substring(5);
 				Platform.runLater(() -> {
@@ -501,14 +512,10 @@ public class GuiClient extends Application {
 					}
 				});
 			}
+			// no rematch statuts handling
 			else if (msg.equals("no_rematch")) {
 				stillWaiting = false;
 				Platform.runLater(() -> {
-//					Alert alert = new Alert(Alert.AlertType.INFORMATION);
-//					alert.setTitle("Rematch Cancelled");
-//					alert.setHeaderText(null);
-//					alert.setContentText("Your opponent declined the rematch and returned to main menu. Please return to main menu and find another match.");
-//					alert.showAndWait();
 					reloadRematchDecline.setText("Your opponent declined the rematch and returned to main menu. Please return to main menu and find another match.");
 					rematchDecline.setText("Your opponent declined the rematch and returned to main menu. Please return to main menu and find another match.");
 					rematchDecline.setVisible(true);
@@ -520,14 +527,15 @@ public class GuiClient extends Application {
 							Stage stage = (Stage) scene.getWindow();
 							stage.setScene(mainScreen);
 						} else {
-							System.out.println("⚠️ Could not switch to main screen — scene/window is null");
+							System.out.println("Could not switch to main screen — scene/window is null");
 						}
 					} catch (Exception ex) {
 						ex.printStackTrace();
-						System.out.println("❌ Error switching to main screen after no_rematch");
+						System.out.println("Error switching to main screen after no_rematch");
 					}
 				});
 			}
+			// user list for the entire online player status lookup
 			else if (msg.startsWith("USERLIST:")) {
 				String[] allNames = msg.substring(9).split(",");
 				ArrayList<String> others = new ArrayList<>();
@@ -541,30 +549,7 @@ public class GuiClient extends Application {
 					clientThread.getUsernamesHandler().accept(others);
 				}
 			}
-//			else if (msg.equals("no_rematch")) {
-//				stillWaiting = false;
-//				Platform.runLater(() -> {
-//					Alert alert = new Alert(Alert.AlertType.INFORMATION);
-//					alert.setTitle("Rematch Cancelled");
-//					alert.setHeaderText(null);
-//					alert.setContentText("Your opponent declined the rematch. Returning to main menu.");
-//					alert.showAndWait();
-//					mainScreen();
-//					try {
-//						Scene scene = chatDisplay.getScene();
-//						if (scene != null && scene.getWindow() != null) {
-//							Stage stage = (Stage) scene.getWindow();
-//							stage.setScene(mainScreen);
-//						} else {
-//							System.out.println("⚠️ Could not switch to main screen — scene/window is null");
-//						}
-//					} catch (Exception ex) {
-//						ex.printStackTrace();
-//						System.out.println("❌ Error switching to main screen after no_rematch");
-//					}
-//				});
-//			}
-
+			// waiting for game message handler trying to handle spectators watching nothing
 			else if (msg.equals("waiting_for_game")) {
 				Platform.runLater(() -> {
 					if (loadingLabel != null) {
@@ -573,16 +558,19 @@ public class GuiClient extends Application {
 					System.out.println("Still waiting for an active game to spectate...");
 				});
 			}
+			// if they clciked spectating
 			else if (msg.equals("spectating")) {
 				isSpectator = true;
 				Platform.runLater(() -> playGameScreen(primaryStage));
 			}
+			// if starts with this, makes sure to display right message
 			else if (msg.startsWith("spectator_game_over:")) {
 				String[] parts = msg.substring(20).split(",");
 				String winner = parts[0];
 				String loser = parts[1];
 				Platform.runLater(() -> spectatorResultScreen((Stage) chatDisplay.getScene().getWindow(), winner, loser));
 			}
+			// updating the board for the spectators
 			else if (msg.startsWith("BOARDSTATE:")) {
 				String boardData = msg.substring(11);
 				String[] rows = boardData.split(";");
@@ -598,6 +586,7 @@ public class GuiClient extends Application {
 					}
 				});
 			}
+			// anything else is a random message
 			else {
 				System.out.println("Server: " + msg);
 			}

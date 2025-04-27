@@ -9,14 +9,15 @@ public class Server {
 	ArrayList<ClientThread> clients = new ArrayList<>(); //stores all clients
 	ArrayList<String> usernames = new ArrayList<>(); //stores all usernames
 	ArrayList<ClientThread> playQueue = new ArrayList<>(); //stores the player queue of who clicked playOnline
-	ArrayList<String> sensoredWords = new ArrayList<>();
-	ArrayList<ClientThread> spectatorQueue = new ArrayList<>();
+	ArrayList<String> sensoredWords = new ArrayList<>(); // stores the very bad words (please excuse my language)
+	ArrayList<ClientThread> spectatorQueue = new ArrayList<>(); // for spectator queue
 	GameSession currentActiveGame = null;
 
 	TheServer server;
 	private Consumer<String> callback;
 	public Server(Consumer<String> callback) {
 		this.callback = callback;
+		//adding words that should be sensored, please excuse our language.
 		sensoredWords.add("fuck");
 		sensoredWords.add("shit");
 		sensoredWords.add("bitch");
@@ -33,6 +34,7 @@ public class Server {
 		server = new TheServer();
 		server.start();
 	}
+
 	public class TheServer extends Thread {
 		public void run() {
 			try (ServerSocket mysocket = new ServerSocket(5555)) {
@@ -62,6 +64,7 @@ public class Server {
 		public void setSession(GameSession session) {
 			this.session = session;
 		}
+		//constructor
 		ClientThread(Socket s, int count) {
 			this.connection = s;
 			this.count = count;
@@ -92,6 +95,7 @@ public class Server {
 		public void updateClients(String message) {
 			callback.accept(message);
 		}
+
 		public void run() {
 			try {
 				in = new ObjectInputStream(connection.getInputStream());
@@ -149,19 +153,20 @@ public class Server {
 						}
 						//if they aren't already in the queueu
 						if(!alreadyWaiting){
-							playQueue.add(this);
+							playQueue.add(this); //adding to the queue if they are already waiting
 							updateClients(username + " wants to play!");
 						}
 						//when the queue is greater than 2
 						if (playQueue.size() >= 2) {
-							ClientThread p1 = playQueue.remove(0);
+							ClientThread p1 = playQueue.remove(0); // popping off the adjacent two players
 							ClientThread p2 = playQueue.remove(0);
 
-							GameSession gs = new GameSession(Server.this, p1, p2, callback);
-							currentActiveGame = gs;
+							GameSession gs = new GameSession(Server.this, p1, p2, callback); // starting a new game
+							currentActiveGame = gs; // this variable used for spectators
 							p1.setSession(gs);
 							p2.setSession(gs);
 
+							//synchronization wooo woooo, making sure the spectators are syncronized in order to ensure they see the correct thing entire time and they go in order
 							synchronized (spectatorQueue) {
 								for (ClientThread spectator : spectatorQueue) {
 									spectator.setSession(gs);
@@ -175,7 +180,7 @@ public class Server {
 								spectatorQueue.clear();
 							}
 
-							p1.lastOpponent = p2;
+							p1.lastOpponent = p2; // whoever their last oppoenent is for rematch logic
 							p2.lastOpponent = p1;
 							try {
 								p1.out.writeObject("game_start:G");
@@ -188,17 +193,19 @@ public class Server {
 							}
 						}
 					}
+					// user list is usesd for the online players, joins them all together and updates the cliensts
 					else if (data.equals("get_user_list")) { //need this so we cn update the clients that are online after a game, otherwise, we stuck bc the server didnt receive or send after BroastingtoAll the first time
 						String userListMsg = "USERLIST:" + String.join(",", usernames);
 						out.writeObject(userListMsg);
 					}
+					// this when recieves input that a user wants a rematch, making sure we set the vars to false and if we get it from this and their last opponent sending them to a new game
 					else if(data.equals("play_again")) {
 						this.wantsRematch = true;
-						if (this.lastOpponent != null && this.lastOpponent.wantsRematch) {
+						if (this.lastOpponent != null && this.lastOpponent.wantsRematch) { // checking their opponents rematch status
 							this.wantsRematch = false;
 							this.lastOpponent.wantsRematch = false;
 							GameSession gs = new GameSession(Server.this, this, this.lastOpponent, callback);
-							this.setSession(gs);
+							this.setSession(gs); //setting teh session for them and the opponent
 							this.lastOpponent.setSession(gs);
 							try {
 								this.out.writeObject("game_start:G");
@@ -209,34 +216,36 @@ public class Server {
 							broadcastUsernamesToAll();
 						}
 					}
+					//if the person clicked back to main or cancle, showing that they don't want a rematch, basically opposite logic from above
 					else if (data.equals("cancel_rematch")) {
 						this.wantsRematch = false;
 						if (this.lastOpponent != null) {
 							try {
 								this.lastOpponent.wantsRematch = false;
 								this.lastOpponent.lastOpponent = null;
-								this.lastOpponent.out.writeObject("no_rematch"); // 💥 notify waiting player
+								this.lastOpponent.out.writeObject("no_rematch"); //notify waiting player so they know like hey they don;t wanna play with you dawg
 							} catch (Exception ex) {
 								callback.accept("Error notifying opponent about rematch cancel.");
 							}
 						}
 						this.lastOpponent = null;
 					}
+					//spectate logic
 					else if (data.equals("spectate_request")) {
-						synchronized (spectatorQueue) {
+						synchronized (spectatorQueue) { // syncrhonized queue
 							if (currentActiveGame != null) {
 								setSession(currentActiveGame);
 								try {
 									out.writeObject("spectating");
-									out.writeObject("BOARDSTATE:" + currentActiveGame.getBoardStateString());
-									currentActiveGame.addSpectator(this);
+									out.writeObject("BOARDSTATE:" + currentActiveGame.getBoardStateString()); //sending them the most updated board state
+									currentActiveGame.addSpectator(this); // adding them to the current game saved
 								} catch (Exception ex) {
 									ex.printStackTrace();
 								}
 							} else {
 								spectatorQueue.add(this);
 								try {
-									out.writeObject("waiting_for_game");
+									out.writeObject("waiting_for_game"); // if no game is active making sure they are waiting
 								} catch (Exception ex) {
 									ex.printStackTrace();
 								}
