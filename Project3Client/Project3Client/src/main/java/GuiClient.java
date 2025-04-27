@@ -23,7 +23,7 @@ import javafx.util.Duration;
 public class GuiClient extends Application {
 	Client clientThread = new Client();
 	TextField usernameInput;
-	Button submitUser, playOnline, playWithComputer;
+	Button submitUser, playOnline;
 	VBox usernameSelection, mainLayout, buttonBox, onlineBox;
 	Label feedbackLabel, welcomeLabel, titleLabel, onlineTitle, onlineList;
 	HBox usernameBox, information;
@@ -77,6 +77,9 @@ public class GuiClient extends Application {
 				space.setOnAction(e -> clientThread.send("MOVE:" + colDrop)); // everytime a space is clicked, it sends the move
 				gridOfButtons[r][c] = space; // setting it equal to it
 				boardGrid.add(space, c, r); // adding that specific token
+				if (isSpectator) {
+					space.setDisable(true); //disabling the spaces..i mean no need to click i f ur a spectator
+				}
 			}
 		}
 		boardGrid.setAlignment(Pos.CENTER);
@@ -91,7 +94,7 @@ public class GuiClient extends Application {
 		boardStack.setAlignment(Pos.CENTER);
 		turnLabel.setFont(Font.font("Courier New", 32));
 		turnLabel.setTextFill(Color.BLACK);
-		turnLabel.setStyle("-fx-effect: dropshadow(gaussian, black, 2, 0.5, 1, 1);"); //this is for the send pbutton so it looks a little more animtated
+		turnLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 32px; -fx-effect: dropshadow(gaussian, black, 2, 0.5, 1, 1);"); //settting ourb styler so it looks more animated
 		turnLabel.setAlignment(Pos.CENTER);
 		VBox boardWithTurn = new VBox(10, turnLabel, boardStack);
 		boardWithTurn.setAlignment(Pos.CENTER);
@@ -130,22 +133,12 @@ public class GuiClient extends Application {
 		VBox chatSection = new VBox(10, chatDisplay, inputRow);
 		chatSection.setPadding(new Insets(10));
 		chatSection.setAlignment(Pos.CENTER);
-		Button quitButton = new Button("quit");
-		quitButton.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
-		quitButton.setMinSize(100, 36);
-		quitButton.setOnAction(e -> {
-			mainScreen(); //sending the client back to the screen for quitting :- this might causee problems well see
-			primaryStage.setScene(mainScreen);
-		});
-		HBox quitBox = new HBox(quitButton);
-		quitBox.setAlignment(Pos.CENTER_RIGHT);
-		quitBox.setPadding(new Insets(10, 30, 10, 10));
 		VBox chatSectionWrapped = new VBox(chatSection); //wrapping  our plain chatsection to add style-->color, and padding as well as positioning like any other instnace
 		chatSectionWrapped.setStyle("-fx-background-color: #bb99ff; -fx-border-color: black; -fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8;");
 		chatSectionWrapped.setPadding(new Insets(15));
 		chatSectionWrapped.setMaxWidth(580);
 		chatSectionWrapped.setAlignment(Pos.CENTER);
-		VBox gameLayout = new VBox(20, boardWithTurn, chatSectionWrapped, quitBox); //okay this is the entire layout based on the components i listed above
+		VBox gameLayout = new VBox(20, boardWithTurn, chatSectionWrapped); //okay this is the entire layout based on the components i listed above
 		gameLayout.setAlignment(Pos.TOP_CENTER); //will be t where its the chat->gameboard order
 		gameLayout.setPadding(new Insets(20)); //padding betweeen out componnt s
 		gameLayout.setStyle("-fx-background-color: #cab9ec;"); //figma backgrouhnd color
@@ -162,6 +155,7 @@ public class GuiClient extends Application {
 	public void promptUsername(Stage primaryStage) {
 		usernameInput = new TextField();
 		usernameInput.setStyle("-fx-font-size: 16px; -fx-font-family: 'Courier New'; -fx-padding: 5; -fx-border-color: black; -fx-border-width: 2; -fx-border-radius: 4; -fx-background-radius: 4; -fx-background-color: white;");
+		usernameInput.setPrefWidth(300);
 		usernameInput.setPromptText("Enter Your Username");
 		usernameInput.setStyle("-fx-font-size: 16px; -fx-font-family: 'Courier New'; -fx-padding: 5;");
 		welcomeLabel = new Label("Welcome to Connect4");
@@ -261,9 +255,6 @@ public class GuiClient extends Application {
 		playOnline = new Button("Play Online"); //lol i tried making this exaclty likr the figma....well see how this looks like bruv
 		playOnline.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
 		playOnline.setMinSize(157, 36);
-		playWithComputer = new Button("Play with Computer");
-		playWithComputer.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
-		playWithComputer.setMinSize(157, 36);
 		Button spectateButton = new Button("Spectate Game");
 		spectateButton.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
 		spectateButton.setMinSize(157, 36);
@@ -271,7 +262,7 @@ public class GuiClient extends Application {
 			clientThread.send("spectate_request");
 			loadingScreen((Stage) spectateButton.getScene().getWindow(), "Finding a game to watch...");
 		});
-		buttonBox = new VBox(10, playOnline, playWithComputer, spectateButton);
+		buttonBox = new VBox(10, playOnline, spectateButton);
 		buttonBox.setAlignment(Pos.CENTER);
 		onlineTitle = new Label("online players:");
 		onlineTitle.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: black;");
@@ -380,14 +371,16 @@ public class GuiClient extends Application {
 		else{
 			resultLabel.setText(username + " lost!");
 		}
-		resultLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 32px;");
+		resultLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 32px;  -fx-font-weight: bold");
 		// play again and backtomain buttons
-		Button playAgain = new Button("play again");
+		Button playAgain = new Button("Play Again");
+		playAgain.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
 		playAgain.setOnAction(e -> {
 			clientThread.send("play_again");
 			rematchLoadingScreen(stage, "waiting for opponent to accept rematch...");
 		});
 		Button backToMenu = new Button("Main Menu");
+		backToMenu.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
 		backToMenu.setOnAction(e -> {
 			clientThread.send("cancel_rematch");
 			mainScreen();
@@ -404,12 +397,14 @@ public class GuiClient extends Application {
 	public void showDrawScreen(Stage stage) {
 		Label drawLabel = new Label("It's a draw!");
 		drawLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 32px;");
-		Button playAgain = new Button("play again");
+		Button playAgain = new Button("Play Again");
+		playAgain.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
 		playAgain.setOnAction(e -> {
 			clientThread.send("play_again");
 			rematchLoadingScreen(stage, "Waiting for opponent to accept rematch...");
 		});
 		Button backToMenu = new Button("Main Menu");
+		backToMenu.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
 		backToMenu.setOnAction(e -> {
 			clientThread.send("cancel_rematch");
 			mainScreen();
@@ -425,7 +420,7 @@ public class GuiClient extends Application {
 
 	public void spectatorResultScreen(Stage stage, String winner, String loser) {
 		Label resultLabel = new Label(winner + " won against " + loser + "!");
-		resultLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 32px;");
+		resultLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 32px; -fx-font-weight: bold");
 		Button backToMenu = new Button("Return to Main Menu");
 		backToMenu.setOnAction(e -> {
 			mainScreen();
@@ -484,7 +479,10 @@ public class GuiClient extends Application {
 			else if (msg.startsWith("TURN:")) {
 				String playerTurn = msg.substring(5);
 				Platform.runLater(() -> {
-					if (playerTurn.equals(username)) {
+					if (isSpectator) {
+						turnLabel.setText("It's " + playerTurn + "'s turn!");
+					}
+					else if (playerTurn.equals(username)) {
 						turnLabel.setText("It's your turn!");
 					} else {
 						turnLabel.setText("Waiting for " + playerTurn + "...");

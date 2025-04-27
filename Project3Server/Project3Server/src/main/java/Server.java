@@ -180,6 +180,9 @@ public class Server {
 							try {
 								p1.out.writeObject("game_start:G");
 								p2.out.writeObject("game_start:Y");
+
+								p1.out.writeObject("TURN:" + p1.username);
+								p2.out.writeObject("TURN:" + p1.username);//this is so our turns are intitialized the second the board loaded->otherwise, first turn is ambig.
 							} catch (Exception ex) {
 								callback.accept("Failed to notify players of game start.");
 							}
@@ -223,11 +226,10 @@ public class Server {
 						synchronized (spectatorQueue) {
 							if (currentActiveGame != null) {
 								setSession(currentActiveGame);
-								currentActiveGame.addSpectator(this);
 								try {
 									out.writeObject("spectating");
-									// 🛠 SEND the full board immediately
 									out.writeObject("BOARDSTATE:" + currentActiveGame.getBoardStateString());
+									currentActiveGame.addSpectator(this);
 								} catch (Exception ex) {
 									ex.printStackTrace();
 								}
