@@ -262,6 +262,7 @@ public class Server {
 							session.sendToClientFromServer(this, chatMsg);
 						}
 					}
+
 				} catch (Exception e) {
 					//for when the user disconnects from the server
 					updateClients("❌ " + username + " disconnected."); //when a user disconnects
