@@ -36,6 +36,8 @@ public class GuiClient extends Application {
 	private Label loadingLabel;
 	private Stage loadingStage;
 	private boolean isSpectator = false;
+	Label rematchDecline = new Label();
+	Label reloadRematchDecline = new Label();
 
 	private volatile boolean stillWaiting = false;
 	public static void main(String[] args) {
@@ -345,16 +347,20 @@ public class GuiClient extends Application {
 		spinner.setPrefSize(100, 100);
 		//VBox layout = new VBox(20, loading, spinner);
 		Button cancel = new Button("Cancel");
+		reloadRematchDecline.setStyle("-fx-font-size: 16px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-text-fill: black;");
+		reloadRematchDecline.setWrapText(true);
+		reloadRematchDecline.setVisible(false);
 		cancel.setStyle("-fx-background-color: #E5E5E5; -fx-text-fill: black; -fx-font-size: 18px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-background-radius: 4; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 5 15;");
-		VBox layout = new VBox(20, loading, spinner, cancel);
+		VBox layout = new VBox(20, loading, spinner, cancel, reloadRematchDecline);
 		layout.setStyle("-fx-background-color: #c9f;");
 		layout.setAlignment(Pos.CENTER);
 		layout.setPadding(new Insets(30));
 		cancel.setOnAction(e -> {
-			//clientThread.send("play_again");
+			clientThread.send("cancel_rematch");
 			mainScreen();
 			stage.setScene(mainScreen);
 		});
+
 		Scene loadingScene = new Scene(layout, 750, 750);
 		Platform.runLater(() -> {
 			stage.setScene(loadingScene);
@@ -386,7 +392,10 @@ public class GuiClient extends Application {
 			mainScreen();
 			stage.setScene(mainScreen);
 		});
-		VBox layout = new VBox(20, resultLabel, playAgain, backToMenu);
+		rematchDecline.setWrapText(true);
+		rematchDecline.setStyle("-fx-font-size: 16px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-text-fill: black;");
+		rematchDecline.setVisible(false);
+		VBox layout = new VBox(20, resultLabel, playAgain, backToMenu, rematchDecline);
 		layout.setStyle("-fx-background-color: #c9f;");
 		layout.setAlignment(Pos.CENTER);
 		layout.setPadding(new Insets(30));
@@ -410,7 +419,10 @@ public class GuiClient extends Application {
 			mainScreen();
 			stage.setScene(mainScreen);
 		});
-		VBox layout = new VBox(20, drawLabel, playAgain, backToMenu);
+		rematchDecline.setStyle("-fx-font-size: 16px; -fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-text-fill: black;");
+		rematchDecline.setWrapText(true);
+		rematchDecline.setVisible(false);
+		VBox layout = new VBox(20, drawLabel, playAgain, backToMenu, rematchDecline);
 		layout.setStyle("-fx-background-color: #c9f;");
 		layout.setAlignment(Pos.CENTER);
 		layout.setPadding(new Insets(30));
@@ -492,11 +504,15 @@ public class GuiClient extends Application {
 			else if (msg.equals("no_rematch")) {
 				stillWaiting = false;
 				Platform.runLater(() -> {
-					Alert alert = new Alert(Alert.AlertType.INFORMATION);
-					alert.setTitle("Rematch Cancelled");
-					alert.setHeaderText(null);
-					alert.setContentText("Your opponent declined the rematch and returned to main menu. Please return to main menu and find another match.");
-					alert.showAndWait();
+//					Alert alert = new Alert(Alert.AlertType.INFORMATION);
+//					alert.setTitle("Rematch Cancelled");
+//					alert.setHeaderText(null);
+//					alert.setContentText("Your opponent declined the rematch and returned to main menu. Please return to main menu and find another match.");
+//					alert.showAndWait();
+					reloadRematchDecline.setText("Your opponent declined the rematch and returned to main menu. Please return to main menu and find another match.");
+					rematchDecline.setText("Your opponent declined the rematch and returned to main menu. Please return to main menu and find another match.");
+					rematchDecline.setVisible(true);
+					reloadRematchDecline.setVisible(true);
 					mainScreen();
 					try {
 						Scene scene = chatDisplay.getScene();
@@ -525,29 +541,30 @@ public class GuiClient extends Application {
 					clientThread.getUsernamesHandler().accept(others);
 				}
 			}
-			else if (msg.equals("no_rematch")) {
-				stillWaiting = false;
-				Platform.runLater(() -> {
-					Alert alert = new Alert(Alert.AlertType.INFORMATION);
-					alert.setTitle("Rematch Cancelled");
-					alert.setHeaderText(null);
-					alert.setContentText("Your opponent declined the rematch. Returning to main menu.");
-					alert.showAndWait();
-					mainScreen();
-					try {
-						Scene scene = chatDisplay.getScene();
-						if (scene != null && scene.getWindow() != null) {
-							Stage stage = (Stage) scene.getWindow();
-							stage.setScene(mainScreen);
-						} else {
-							System.out.println("⚠️ Could not switch to main screen — scene/window is null");
-						}
-					} catch (Exception ex) {
-						ex.printStackTrace();
-						System.out.println("❌ Error switching to main screen after no_rematch");
-					}
-				});
-			}
+//			else if (msg.equals("no_rematch")) {
+//				stillWaiting = false;
+//				Platform.runLater(() -> {
+//					Alert alert = new Alert(Alert.AlertType.INFORMATION);
+//					alert.setTitle("Rematch Cancelled");
+//					alert.setHeaderText(null);
+//					alert.setContentText("Your opponent declined the rematch. Returning to main menu.");
+//					alert.showAndWait();
+//					mainScreen();
+//					try {
+//						Scene scene = chatDisplay.getScene();
+//						if (scene != null && scene.getWindow() != null) {
+//							Stage stage = (Stage) scene.getWindow();
+//							stage.setScene(mainScreen);
+//						} else {
+//							System.out.println("⚠️ Could not switch to main screen — scene/window is null");
+//						}
+//					} catch (Exception ex) {
+//						ex.printStackTrace();
+//						System.out.println("❌ Error switching to main screen after no_rematch");
+//					}
+//				});
+//			}
+
 			else if (msg.equals("waiting_for_game")) {
 				Platform.runLater(() -> {
 					if (loadingLabel != null) {
