@@ -568,6 +568,7 @@ public class GuiClient extends Application {
 				String[] parts = msg.substring(20).split(",");
 				String winner = parts[0];
 				String loser = parts[1];
+				isSpectator = false; // setting them back to a normal player cause it wanna tweak
 				Platform.runLater(() -> spectatorResultScreen((Stage) chatDisplay.getScene().getWindow(), winner, loser));
 			}
 			// updating the board for the spectators
