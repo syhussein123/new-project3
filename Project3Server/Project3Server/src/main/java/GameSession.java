@@ -20,6 +20,7 @@ public class GameSession {
 				}
 			}
 		}
+		sendToClientFromServer(spectator, "TURN:" + currentPlayer.username); //this is so the turns are directly reflected for the spectators jsut as they are for the playetrs
 	}
 
 	public String getBoardStateString() {
@@ -110,10 +111,16 @@ public class GameSession {
 				// continue to next turn
 				sendToClientFromServer(player1, "Player " + currPlayer.count + " dropped in column " + c);
 				sendToClientFromServer(player2, "Player " + currPlayer.count + " dropped in column " + c);
+
+
 				currentPlayer = (currPlayer == player1) ? player2 : player1;
 				currentToken = currentToken.equals("G") ? "Y" : "G";
 				sendToClientFromServer(player1, "TURN:" + currentPlayer.username);
 				sendToClientFromServer(player2, "TURN:" + currentPlayer.username);
+
+				for (Server.ClientThread spectator : spectators) {
+					sendToClientFromServer(spectator, "TURN:" + currentPlayer.username);
+				} //this is to essentially broadcast the activity directly to the spectator
 				return;
 			}
 		}
